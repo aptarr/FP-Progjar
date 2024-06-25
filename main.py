@@ -5,8 +5,9 @@ from pages.dashboard import dashboard
 
 def main(page: ft.Page):
     page.title = "Chat Application"
-    page.window_width = 360
-    page.window_height = 640
+    page.window.width = 360
+    page.window.height = 640
+    page.window.title_bar_hidden = False
     
     routes = {
         "/login": login,
