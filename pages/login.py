@@ -1,14 +1,12 @@
 import flet as ft
-from cli import ChatClient
-
-chat_client = ChatClient()
+from cli import cc
 
 def login():
     def handle_login(e):
         username = username_field.value
         password = password_field.value
-        result = chat_client.proses(f"auth {username} {password}")
-        if chat_client.tokenid:
+        result = cc.proses(f"auth {username} {password}")
+        if cc.tokenid:
             e.page.go("/dashboard")
         else:
             status.value = result

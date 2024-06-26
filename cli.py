@@ -19,6 +19,12 @@ class ChatClient:
                 username=j[1].strip()
                 password=j[2].strip()
                 return self.login(username,password)
+            elif (command=='register'):
+                username=j[1].strip()
+                password=j[2].strip()
+                return self.register(username,password)
+            elif (command=='logout'):
+                return self.logout()
             else:
                 return "*Maaf, command tidak benar"
         except IndexError:
@@ -48,3 +54,24 @@ class ChatClient:
             return "username {} logged in, token {} " .format(username,self.tokenid)
         else:
             return "Error, {}" . format(result['message'])
+        
+    def register(self,username,password):
+        string="register {} {} \r\n" .format(username,password)
+        result = self.sendstring(string)
+        if result['status']=='OK':
+            self.tokenid=result['tokenid']
+            return "username {} registered, token {} " .format(username, self.tokenid)
+        else:
+            return "Error, {}" . format(result['message'])
+        
+    def logout(self):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="logout {} \r\n" .format(self.tokenid)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "user logged out"
+        else:
+            return "Error, {}".format(result["message"])
+        
+cc = ChatClient()

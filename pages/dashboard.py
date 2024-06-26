@@ -1,8 +1,12 @@
 import flet as ft
+from cli import cc
+
 
 def dashboard():
     def handle_logout(e):
-        e.page.go("/login")
+        result = cc.proses(f"logout")
+        if result == "user logged out":
+            e.page.go("/login")
     
     def handle_search(e):
         e.page.update()

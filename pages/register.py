@@ -1,13 +1,23 @@
 import flet as ft
+from cli import cc
 
 def register():
     def handle_register(e):
         username = username_field.value
         password = password_field.value
         confirm = confirm_field.value
- 
+
         if password == confirm:
-            e.page.go("/dashboard")
+            result = cc.proses(f"register {username} {password}")
+            
+            if result.startswith('username'):
+                e.page.go("/dashboard")
+            else:
+                status.value = result
+                e.page.update()
+        else:
+            status.value = 'Confirm password salah'
+            e.page.update()
             
     logo = ft.Container(
         content = ft.Text("LOGO", size=36, color="#d84d4d"),
