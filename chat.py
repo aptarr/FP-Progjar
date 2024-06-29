@@ -109,6 +109,15 @@ class Chat:
 			'updatedAt': '2021-10-10 10:10:10'
 		}
 
+		self.chats['4'] = {
+			'type': 'group',
+			'name': 'group3',
+			'password': 'secret',
+			'message': [],
+			'member': ['hmd'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
+
 		# Path to store uploaded files
 		self.file_storage_path = 'uploads'
 		if not os.path.exists(self.file_storage_path):
@@ -233,6 +242,11 @@ class Chat:
 				chat_id=j[2].strip()
 				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
 				return self.get_inbox(tokenid, chat_id)
+
+			elif (command == 'getNewChat'):
+				tokenid=j[1].strip()
+				logging.warning("GETNEWCHAT: {}" . format(tokenid))
+				return self.get_new_chat(tokenid)
 
 			elif (command == 'addMember'):
 				auth=j[1].strip()
@@ -578,6 +592,39 @@ class Chat:
 		}
 		return {'status': 'OK', 'data': inbox}
 	
+	def get_new_chat(self, tokenid):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		username = self.sessions[tokenid]['username']
+
+		data = []
+		for user in self.users:
+			found = False
+			if user == username:
+				continue
+			for chat in self.chats:
+				if self.chats[chat]['type'] == 'private':
+					if username in self.chats[chat]['member'] and user in self.chats[chat]['member']:
+						found = True
+						break
+			if not found:
+				data.append({
+					'type': 'private',
+					'id': user,
+					'name': user
+				})
+		for chat in self.chats:
+			if self.chats[chat]['type'] == 'group':
+				if username not in self.chats[chat]['member']:
+					data.append({
+					'type': 'group',
+					'id': chat,
+					'name': self.chats[chat]['name']
+				})
+		
+		return {'status': 'OK', 'data': data}
+
+	
 	def sync_self_chat(self, auth, ipRealm, chat_id, username):
 		if self.realms[ipRealm]['auth'] != auth:
 			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
@@ -667,3 +714,10 @@ if __name__=="__main__":
 	sesi2 = j.proses("login lineker secret")
 	print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
 	print(j.chats['3'])
+	
+	# testing getNewChat
+	sesi1 = j.proses("login lineker secret")
+	print(j.proses("getNewChat {}".format(sesi1['tokenid'])))
+
+	sesi2 = j.proses("login messi secret")
+	print(j.proses("getNewChat {}".format(sesi2['tokenid'])))
