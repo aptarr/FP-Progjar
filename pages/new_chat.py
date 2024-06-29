@@ -1,31 +1,35 @@
 import flet as ft
 from cli import cc
 
-def dashboard():
-    def handle_logout(e):
-        result = cc.proses(f"logout")
-        if result == "user logged out":
-            e.page.go("/login")
-    
+def new_chat():
+    def back(e):
+        e.page.go("/dashboard")
+        
     def handle_search(e):
         e.page.update()
-    
+        
     def go_to_private_chat(e):
         e.page.go("/private_chat")
         
-    def go_to_group_chat(e):
-        e.page.go("/group_chat")
+    def join_group(e):
+        e.page.go("/join_group")
         
-    def go_to_new_chat(e):
-        e.page.go("/new_chat")
+    def create_group(e):
+        e.page.go("/create_group")
     
     top_bar = ft.Container(
         content=ft.Row(
             controls=[
-                ft.Text("Your Chat", size=18),
-                ft.TextButton(text="Logout", on_click=handle_logout),
+                ft.Container(    
+                    content=ft.Icon(
+                        name=ft.icons.ARROW_BACK_IOS,
+                        size=18,
+                        color=ft.colors.BLACK,
+                    ),
+                    on_click=back
+                ),
+                ft.Text("New Chat", size=18),
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
         padding=ft.padding.all(10),
@@ -60,14 +64,14 @@ def dashboard():
         size=50,
         color=ft.colors.RED
     )
-    new_chat_container = ft.Container(
+    create_group_container = ft.Container(
         content=ft.Row(
             controls=[
                 plus_icon,
                 ft.Column(
                     controls=[
-                        ft.Text("Start New Chat", size=16),
-                        ft.Text("Find chat to start with", size=14, color=ft.colors.GREY)
+                        ft.Text("Create New Group", size=16),
+                        ft.Text("Create Group", size=14, color=ft.colors.GREY)
                     ],
                     spacing=5,
                     alignment=ft.MainAxisAlignment.START
@@ -77,7 +81,7 @@ def dashboard():
             vertical_alignment=ft.CrossAxisAlignment.CENTER
         ),
         padding=ft.padding.all(10),
-        on_click=go_to_new_chat,
+        on_click=create_group,
         ink=True,
         bgcolor=ft.colors.GREY_100,
         border_radius=15,
@@ -118,7 +122,7 @@ def dashboard():
                 ft.Column(
                     controls=[
                         ft.Text("Groupname", size=16),
-                        ft.Text("Last message", size=14, color=ft.colors.GREY),
+                        ft.Text("Last message", size=14, color=ft.colors.GREY)
                     ],
                     spacing=5,
                     alignment=ft.MainAxisAlignment.START
@@ -128,7 +132,7 @@ def dashboard():
             vertical_alignment=ft.CrossAxisAlignment.CENTER
         ),
         padding=ft.padding.all(10),
-        on_click=go_to_group_chat,
+        on_click=join_group,
         ink=True,
         bgcolor=ft.colors.GREY_100,
         border_radius=15,
@@ -136,14 +140,10 @@ def dashboard():
     )
     chat_list_view = ft.ListView(
         controls = [
-            new_chat_container,
+            create_group_container,
             chat_container,
             chat_container,
             group_container,
-            chat_container,
-            group_container,
-            chat_container,
-            chat_container,
         ],
         padding=10,
         spacing=10,
