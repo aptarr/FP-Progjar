@@ -10,11 +10,15 @@ from queue import Queue
 class Chat:
 	def __init__(self):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# sessions:
-		# 	sessionid: {uuid: users}
-		self.sessions={}
 		self.realm_auth = "secret1"
 		self.realm_ip = "127.0.0.1"
+
+		# sessions:
+		# 	sessionid
+		# 	username
+		# 	userdetail
+		self.sessions={}
+
 		self.users = {}
 		# 	users:
 		# 		name
@@ -224,9 +228,9 @@ class Chat:
 	def get_all_inbox(self, tokenid):
 		if tokenid not in self.sessions:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
-		username = self.sessions[tokenid]['username']
+		users = self.sessions[tokenid]['userdetail']
 		inbox = []
-		for chat_id in self.users[username]['chats']:
+		for chat_id in users['chats']:
 			inbox.append({
 				"id": chat_id,
 				"type": self.chats[chat_id]['type'],
@@ -235,14 +239,14 @@ class Chat:
 				"member": self.chats[chat_id]['member'],
 				"updatedAt": self.chats[chat_id]['updatedAt']
 			})
-		return {'status': 'OK', 'data': inbox}
+		return {'status': 'OK', 'data': inbox}	
 	
 	def get_inbox(self, tokenid, chat_id):
 		if tokenid not in self.sessions:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
-		username = self.sessions[tokenid]['username']
+		users = self.sessions[tokenid]['userdetail']
 
-		if chat_id not in self.users[username]['chats']:
+		if chat_id not in users['chats']:
 			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
 
 		inbox = {
@@ -259,11 +263,11 @@ if __name__=="__main__":
 	j = Chat()
 	
 	# testing register
-	sesi = j.proses("register geprek secret ")
-	print(j.users)
+	# sesi = j.proses("register geprek secret ")
+	# print(j.users)
 
-	sesi2 = j.proses("register geprek secret ")
-	print(j.users)
+	# sesi2 = j.proses("register geprek secret ")
+	# print(j.users)
 
 	# testing inbox dan inboxall
 	sesi1 = j.proses("login messi secret")
