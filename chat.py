@@ -196,7 +196,23 @@ class Chat:
 				chat_id=j[2].strip()
 				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
 				return self.get_inbox(tokenid, chat_id)
-			
+
+			elif (command == 'addMember'):
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				chat_id = j[3].strip()
+				username = j[4].strip()
+				logging.warning("SYNC: addMember {} {} {} {}" . format(auth, ipRealm, chat_id, username))
+				result = self.sync_self_chat(auth, ipRealm, chat_id, username)
+				return result
+
+			elif (command == 'joinGroup'):
+				tokenid = j[1].strip()
+				group_id = j[2].strip()
+				password = j[3].strip()
+				logging.warning("JOIN_GROUP: {} {} {}" . format(tokenid, group_id, password))
+				result = self.join_group(tokenid, group_name, password)	
+				return result
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
 		except KeyError:
@@ -405,6 +421,37 @@ class Chat:
 			"updatedAt": self.chats[chat_id]['updatedAt']
 		}
 		return {'status': 'OK', 'data': inbox}
+	
+	def sync_self_chat(self, auth, ipRealm, chat_id, username):
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
+		
+		if chat_id not in self.chats:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+
+		self.chats[chat_id]['member'].append(username)
+		return {'status': 'OK', 'message': 'Berhasil menambahkan user {} ke dalam chat {}' . format(chat_id,self.chats[chat_id]['name'])}
+	# joingroup <token> <groupname> <password>
+	def join_group(self, tokenid, chat_id, password):
+		if tokenid not in self.sessions:	
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		users = self.sessions[tokenid]['userdetail']
+		username = self.sessions[tokenid]['username']
+		if chat_id not in self.chats:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+		if self.chats[chat_id] ['type'] != 'group':
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan (bukan grpoup)'}
+		if password == self.chats[chat_id]['password']:
+			if username in self.chats[chat_id]['member']:
+				return {'status': 'ERROR', 'message': 'Anda sudah menjadi member group {}' . format(self.chats[chat_id]['name'])}
+			else:
+				users['chats'].append(chat_id)
+				self.chats[chat_id]['member'].append(username)
+				for ip,val in self.realms.items():#menambahkan member kedalam chats dimasing masing realm
+					string = 'addMember {} {} {} {} \r\n' . format(self.realm_auth, self.realm_ip, chat_id, username)
+					self.sendstring(string, ip, self.realms[ip]['port'])
+				return {'status': 'OK', 'message': 'Berhasil masuk kedalam group {}' . format(self.chats[chat_id]['name'])}
+		return {'status': 'ERROR', 'message': 'Password Tidak Sesuai'}
 
 if __name__=="__main__":
 	j = Chat()
