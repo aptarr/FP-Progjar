@@ -52,11 +52,13 @@ class Chat:
 				{
 					'sender': 'messi',
 					'message': 'Hello',
+					'isFile': False,
 					'timestamp': '2021-10-10 10:10:10'
 				},
 				{
 					'sender': 'henderson',
 					'message': 'Hi',
+					'isFile': False,
 					'timestamp': '2021-10-10 10:10:10'
 				}
 			],
@@ -72,16 +74,25 @@ class Chat:
 				{
 					'sender': 'messi',
 					'message': 'Hello',
+					'isFile': False,
 					'timestamp': '2021-10-10 10:10:10'
 				},
 				{
 					'sender': 'henderson',
 					'message': 'Hi',
+					'isFile': False,
 					'timestamp': '2021-10-10 10:10:10'
 				},
 				{
 					'sender': 'lineker',
 					'message': 'Hi',
+					'isFile': False,
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'sender': 'lineker',
+					'message': 'test-get.txt',
+					'isFile': True,
 					'timestamp': '2021-10-10 10:10:10'
 				}
 			],
@@ -244,8 +255,8 @@ class Chat:
 			elif (command == 'sendfile'):
 				tokenid=j[1].strip()
 				chat_id=j[2].strip()
-				filecontent = j[3].strip()
-				filepath = j[4].strip()
+				filepath = j[3].strip()
+				filecontent = ' '.join(j[4:]).strip()
 				logging.warning("SENDFILE: {} {} {}" . format(tokenid, chat_id, filepath))
 				return self.upload_file(tokenid, chat_id, filecontent, filepath)
 

@@ -33,10 +33,10 @@ class ChatClient:
             elif (command=='inbox'):
                 chatid=j[1].strip()
                 return self.inbox(chatid)
-            elif (command=='remote_get'):
-                return self.remote_get(self.tokenid,j[1],j[2])
-            elif (command=='remote_post'):
+            elif (command=='sendfile'):
                 return self.remote_post(self.tokenid,j[1],j[2])
+            elif (command=='getfile'):
+                return self.remote_get(self.tokenid,j[1],j[2])
             else:
                 return "*Maaf, command tidak benar"
         except IndexError:
@@ -94,10 +94,9 @@ class ChatClient:
     def remote_post(self, tokenid, chat_id, filepath):
         with open(filepath, 'rb') as fp:
             data = base64.b64encode(fp.read()).decode()
-        command_str = f"sendfile {tokenid} {chat_id} {data} {filepath} \r\n"
+        command_str = f"sendfile {tokenid} {chat_id} {filepath} {data} \r\n"
         hasil = self.sendstring(command_str)
         if hasil['status'] == 'OK':
-            print(hasil['data'])
             return True
         else:
             print("Gagal")
@@ -144,3 +143,10 @@ class ChatClient:
             return "Error, {}".format(result["message"])
 
 cc = ChatClient()
+
+if __name__=="__main__":
+	# testing sendfile dan getfile
+    print(cc.proses("login user1 user1"))
+    print(cc.proses("sendfile 1 test-send.txt"))
+    print(cc.proses("getfile 1 test-get.txt"))
+    print(cc.proses("logout"))
