@@ -25,6 +25,13 @@ class ChatClient:
                 return self.register(username,password)
             elif (command=='logout'):
                 return self.logout()
+            elif (command=='getusername'):
+                return self.getusername()
+            elif (command=='inboxall'):
+                return self.inboxall()
+            elif (command=='inbox'):
+                chatid=j[1].strip()
+                return self.inbox(chatid)
             else:
                 return "*Maaf, command tidak benar"
         except IndexError:
@@ -74,4 +81,34 @@ class ChatClient:
         else:
             return "Error, {}".format(result["message"])
         
+    def getusername(self):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="getusername {} \r\n" .format(self.tokenid)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
+        
+    def inboxall(self):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="inboxall {} \r\n" .format(self.tokenid)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
+        
+    def inbox(self, chatid):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="inbox {} {} \r\n" .format(self.tokenid, chatid)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
+
 cc = ChatClient()
