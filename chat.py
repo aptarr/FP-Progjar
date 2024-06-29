@@ -47,6 +47,7 @@ class Chat:
 		self.chats['1'] = {
 			'type': 'private',
 			'name': 'messi',
+			'password': '',
 			'message': [
 				{
 					'sender': 'messi',
@@ -66,6 +67,7 @@ class Chat:
 		self.chats['2'] = {
 			'type': 'group',
 			'name': 'group1',
+			'password': 'secret',
 			'message': [
 				{
 					'sender': 'messi',
@@ -86,6 +88,16 @@ class Chat:
 			'member': ['messi', 'henderson', 'lineker', 'hmd'],
 			'updatedAt': '2021-10-10 10:10:10'
 		}
+
+		self.chats['3'] = {
+			'type': 'group',
+			'name': 'group2',
+			'password': 'secret',
+			'message': [],
+			'member': ['lineker'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
+
 		# Path to store uploaded files
 		self.file_storage_path = 'uploads'
 		if not os.path.exists(self.file_storage_path):
@@ -218,6 +230,7 @@ class Chat:
 				username = j[4].strip()
 				logging.warning("SYNC: addMember {} {} {} {}" . format(auth, ipRealm, chat_id, username))
 				result = self.sync_self_chat(auth, ipRealm, chat_id, username)
+				print(self.chats[chat_id])
 				return result
 
 			elif (command == 'joinGroup'):
@@ -225,7 +238,7 @@ class Chat:
 				group_id = j[2].strip()
 				password = j[3].strip()
 				logging.warning("JOIN_GROUP: {} {} {}" . format(tokenid, group_id, password))
-				result = self.join_group(tokenid, group_name, password)	
+				result = self.join_group(tokenid, group_id, password)
 				return result
 			
 			elif (command == 'sendfile'):
@@ -604,3 +617,15 @@ if __name__=="__main__":
 	sesi2 = j.proses("login henderson secret")
 	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
 	print(j.chats)
+
+	# testing joinGroup
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
+	print(j.chats['3'])
+
+	print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
+	print(j.chats['3'])
+
+	sesi2 = j.proses("login lineker secret")
+	print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
+	print(j.chats['3'])
