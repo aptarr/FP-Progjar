@@ -211,13 +211,13 @@ class Chat:
 				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
 				return self.get_inbox(tokenid, chat_id)
 
-			elif (command == 'upload_file'):
+			elif (command == 'sendfile'):
 				tokenid=j[1].strip()
 				chat_id=j[2].strip()
 				filecontent = j[3].strip()
 				filepath = j[4].strip()
-				logging.warning("upload_file: {} {} {}" . format(tokenid, chat_id, filecontent, filepath))
-				return self.upload_file(tokenid, chat_id, filepath)
+				logging.warning("SENDFILE: {} {} {}" . format(tokenid, chat_id, filepath))
+				return self.upload_file(tokenid, chat_id, filecontent, filepath)
 			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
@@ -413,6 +413,7 @@ class Chat:
 		self.chats[chat_id]['message'].append({
 			'sender': sender,
 			'message': message,
+			'isFile': False,
 			'timestamp': timestamp
 		})
 
@@ -451,7 +452,8 @@ class Chat:
 					
 		message = {
 			'sender': sender,
-			'message': f"File uploaded: {filename}",
+			'message': filename,
+			'isFile': True,
 			'timestamp': timestamp
 			}
 		
