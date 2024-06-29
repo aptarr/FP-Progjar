@@ -21,18 +21,27 @@ def main(page: ft.Page):
         "/new_chat": new_chat,
         "/create_group": create_group,
         "/join_group": join_group,
-        "/private_chat": private_chat,
-        "/group_chat": group_chat,
     }
-    
+
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
-        page.views.append(
-            ft.View(
-                e.route,
-                [routes[e.route]()]
+        route = e.route
+        if route.startswith("/private_chat/"):
+            name = route.split("/private_chat/")[1]
+            page.views.append(
+                ft.View(route, [private_chat(name)])
             )
-        )
+        elif route.startswith("/group_chat/"):
+            name = route.split("/group_chat/")[1]
+            page.views.append(
+                ft.View(route, [group_chat(name)])
+            )
+        else:
+            if route in routes:
+                page.views.append(
+                    ft.View(route, [routes[route]()])
+                )
+        
         page.update()
     
     page.on_route_change = route_change

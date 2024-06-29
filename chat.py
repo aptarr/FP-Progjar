@@ -5,6 +5,7 @@ import uuid
 import logging
 import socket
 import threading
+import base64
 from queue import Queue
 from datetime import datetime
 
@@ -85,6 +86,11 @@ class Chat:
 			'member': ['messi', 'henderson', 'lineker', 'hmd'],
 			'updatedAt': '2021-10-10 10:10:10'
 		}
+		# Path to store uploaded files
+		self.file_storage_path = 'uploads'
+		if not os.path.exists(self.file_storage_path):
+			os.makedirs(self.file_storage_path)
+
 
 		self.realms = {}
 		# realms:
@@ -204,6 +210,14 @@ class Chat:
 				chat_id=j[2].strip()
 				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
 				return self.get_inbox(tokenid, chat_id)
+
+			elif (command == 'upload_file'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				filecontent = j[3].strip()
+				filepath = j[4].strip()
+				logging.warning("upload_file: {} {} {}" . format(tokenid, chat_id, filecontent, filepath))
+				return self.upload_file(tokenid, chat_id, filepath)
 			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
@@ -417,6 +431,34 @@ class Chat:
 
 		return {'status': 'OK', 'message': 'Pesan berhasil dikirim'}
 
+	def upload_file(self, tokenid, chat_id, file_content, file_path):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User not logged in'}
+		
+		users = self.sessions[tokenid]['userdetail']
+		
+		if chat_id not in users['chats']:
+			return {'status': 'ERROR', 'message': 'Chat not found'}
+		
+		filename = os.path.basename(file_path)
+		dest_path = os.path.join(self.file_storage_path, filename)
+		
+		timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+		sender = self.sessions[tokenid]['username']
+		
+		with open(dest_path, 'wb') as f_dest:
+			f_dest.write(base64.b64decode(file_content))
+					
+		message = {
+			'sender': sender,
+			'message': f"File uploaded: {filename}",
+			'timestamp': timestamp
+			}
+		
+		self.chats[chat_id]['message'].append(message)
+		self.chats[chat_id]['updatedAt'] = message['timestamp']
+		return {'status': 'OK', 'message': f"File {filename} uploaded successfully"}
+		
 	def get_all_inbox(self, tokenid):
 		if tokenid not in self.sessions:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
