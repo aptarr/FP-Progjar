@@ -139,6 +139,11 @@ class Chat:
 				logging.warning("SYNC: addUserRealm {} {} {}" . format(auth, ipRealm, username))
 				return self.add_user_realm(auth, ipRealm, username)
 			
+			elif (command == 'getusername'):
+				tokenid=j[1].strip()
+				logging.warning("GETUSERNAME: {}" . format(tokenid))
+				return self.get_username(tokenid)
+			
 			elif (command == 'sendmsg'):
 				tokenid=j[1].strip()
 				chat_id=j[2].strip()
@@ -159,16 +164,19 @@ class Chat:
 				result = self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
 				print(self.chats[chat_id])
 				return result
+			
 			elif(command == 'addRealmChat'):
 				chat_id = j[1].strip()
 				username = j[2].strip()
 				logging.warning("SYNC: addRealmChat {} {} {}" . format(chat_id, chat_dict, username))
 				result = self.add_realm_chats(chat_id, username)
 				return result
+			
 			elif(command == 'changeSelfChat'):
 				chat_id = j[1].strip()
 				chat_dict = ' '.join(j[2:]).strip()
 				logging.warning("SYNC: changeSelfChat {} {}" . format(chat_id, chat_dict))
+
 			elif (command == 'createGroup'):#type, group_name, members banyak
 				tokenid = j[1].strip()
 				type= j[2].strip()
@@ -177,6 +185,7 @@ class Chat:
 				logging.warning("CREATE_GROUP: createGroup {} {} {}" . format(type, group_name, password))
 				result = self.create_chat(tokenid, type, group_name, password = password)
 				return result
+			
 			elif(command == 'createChat'): #type, member
 				tokenid = j[1].strip()
 				type = j[2].strip()
@@ -268,10 +277,17 @@ class Chat:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
 		del self.sessions[tokenid]
 		return {'status': 'OK', 'message': 'User Berhasil Logout'}
+	
+	def get_username(self, tokenid):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		return {'status': 'OK', 'data': self.sessions[tokenid]['username']}
+	
 	def add_realm_chats(self, chat_id, username): # memasukkan chat_id kedalam parameter user
 		self.users[username]['chats'].append(chat_id)
 		# self.chats[chat_id]= chat_dict
 		return { 'status': 'OK', 'message': f'Berhasil menambahkan chat {chat_id} kedalam {self.realm_ip} pada user {username}' }
+	
 	def change_self_chat(self, chat_id, chat_dict):
 		self.chats[chat_id] = chat_dict
 		return { 'status': 'OK', 'message': f'Berhasil mengubah chat chats dengan chat_id {chat_id} kedalam {self.realm_ip}' }
@@ -320,8 +336,6 @@ class Chat:
 			else:
 				self.users[member]['chats'].append(chat_id)
 		return { 'status': 'OK', 'message': f'Berhasil membuat chat' }
-
-		
 
 	def sync_message(self, auth, ipRealm, chat_id, sender, message, timestamp):
 		if self.realms[ipRealm]['auth'] != auth:
@@ -408,32 +422,38 @@ class Chat:
 
 if __name__=="__main__":
 	j = Chat()
+
+	# testing getusername
+	sesi1 = j.proses("login messi secret ")
+	print(j.proses("getusername {} ".format(sesi1['tokenid'])))
 	
-	# testing register
-	sesi = j.proses("register geprek secret ")
-	print(j.users)
+	print(j.proses("getusername {} ".format("FAKE_TOKENID")))
+	
+	# # testing register
+	# sesi = j.proses("register geprek secret ")
+	# print(j.users)
 
-	sesi2 = j.proses("register geprek secret ")
-	print(j.users)
+	# sesi2 = j.proses("register geprek secret ")
+	# print(j.users)
 
-	# testing inbox dan inboxall
-	sesi1 = j.proses("login messi secret")
-	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+	# # testing inbox dan inboxall
+	# sesi1 = j.proses("login messi secret")
+	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	sesi2 = j.proses("login henderson secret")
-	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+	# sesi2 = j.proses("login henderson secret")
+	# print(j.proses("inboxall {}".format(sesi2['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
 
-	sesi3 = j.proses("login lineker secret")
-	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
+	# sesi3 = j.proses("login lineker secret")
+	# print(j.proses("inboxall {}".format(sesi3['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
 
-	# testing sendmsg
-	sesi1 = j.proses("login messi secret")
-	print(j.proses("sendmsg {} {} {}".format(sesi1['tokenid'], '1', 'testing send msg')))
-	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+	# # testing sendmsg
+	# sesi1 = j.proses("login messi secret")
+	# print(j.proses("sendmsg {} {} {}".format(sesi1['tokenid'], '1', 'testing send msg')))
+	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	sesi2 = j.proses("login lineker secret")
-	print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
-	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+	# sesi2 = j.proses("login lineker secret")
+	# print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
+	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
