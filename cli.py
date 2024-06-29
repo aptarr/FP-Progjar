@@ -15,7 +15,7 @@ class ChatClient:
         j=cmdline.split(" ")
         try:
             command=j[0].strip()
-            if (command=='auth'):
+            if (command=='login'):
                 username=j[1].strip()
                 password=j[2].strip()
                 return self.login(username,password)
@@ -47,7 +47,7 @@ class ChatClient:
             return { 'status' : 'ERROR', 'message' : 'Gagal'}
 
     def login(self,username,password):
-        string="auth {} {} \r\n" . format(username,password)
+        string="login {} {} \r\n" . format(username,password)
         result = self.sendstring(string)
         if result['status']=='OK':
             self.tokenid=result['tokenid']
