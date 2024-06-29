@@ -20,9 +20,9 @@ class Chat:
 		# 		name
 		# 		password
 		# 		chat: [] (chats id)
-		self.users['messi']={'password': 'secret', 'chats' : []}
-		self.users['henderson']={'password': 'secret', 'chats': []}
-		self.users['lineker']={'password': 'secret','chats': []}
+		self.users['messi']={'password': 'secret', 'chats' : ['1', '2']}
+		self.users['henderson']={'password': 'secret', 'chats': ['1', '2']}
+		self.users['lineker']={'password': 'secret','chats': ['2']}
 
 		# 	chats:
 		# 		id
@@ -36,9 +36,55 @@ class Chat:
 		# 		from
 		# 		to
 		# 		message
-		# 		status: read/unread
 		# 		timestamp
 		self.chats = {}
+		self.chats['1'] = {
+			'type': 'private',
+			'name': 'messi',
+			'message': [
+				{
+					'from': 'messi',
+					'to': 'henderson',
+					'message': 'Hello',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'from': 'henderson',
+					'to': 'messi',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				}
+			],
+			'member': ['messi', 'henderson'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
+
+		self.chats['2'] = {
+			'type': 'group',
+			'name': 'group1',
+			'message': [
+				{
+					'from': 'messi',
+					'to': 'group1',
+					'message': 'Hello',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'from': 'henderson',
+					'to': 'group1',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'from': 'lineker',
+					'to': 'group1',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				}
+			],
+			'member': ['messi', 'henderson', 'lineker'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
 
 		self.realms = {}
 		# realms:
@@ -90,8 +136,18 @@ class Chat:
 				ipRealm=j[2].strip()
 				username=j[3].strip()
 				logging.warning("SYNC: addUserRealm {} {} {}" . format(auth, ipRealm, username))
-				result = self.add_user_realm(auth, ipRealm, username)
-				return result
+				return self.add_user_realm(auth, ipRealm, username)
+			
+			elif (command == 'inboxall'):
+				tokenid=j[1].strip()
+				logging.warning("INBOXALL: {}" . format(tokenid))
+				return self.get_all_inbox(tokenid)
+			
+			elif (command == 'inbox'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
+				return self.get_inbox(tokenid, chat_id)
 			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
@@ -164,6 +220,40 @@ class Chat:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
 		del self.sessions[tokenid]
 		return {'status': 'OK', 'message': 'User Berhasil Logout'}
+	
+	def get_all_inbox(self, tokenid):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		username = self.sessions[tokenid]['username']
+		inbox = []
+		for chat_id in self.users[username]['chats']:
+			inbox.append({
+				"id": chat_id,
+				"type": self.chats[chat_id]['type'],
+				"name": self.chats[chat_id]['name'],
+				"message": self.chats[chat_id]['message'][-1],
+				"member": self.chats[chat_id]['member'],
+				"updatedAt": self.chats[chat_id]['updatedAt']
+			})
+		return {'status': 'OK', 'data': inbox}
+	
+	def get_inbox(self, tokenid, chat_id):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		username = self.sessions[tokenid]['username']
+
+		if chat_id not in self.users[username]['chats']:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+
+		inbox = {
+			"id": chat_id,
+			"type": self.chats[chat_id]['type'],
+			"name": self.chats[chat_id]['name'],
+			"message": self.chats[chat_id]['message'],
+			"member": self.chats[chat_id]['member'],
+			"updatedAt": self.chats[chat_id]['updatedAt']
+		}
+		return {'status': 'OK', 'data': inbox}
      
 if __name__=="__main__":
 	j = Chat()
@@ -174,3 +264,16 @@ if __name__=="__main__":
 
 	sesi2 = j.proses("register geprek secret ")
 	print(j.users)
+
+	# testing inbox dan inboxall
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+
+	sesi2 = j.proses("login henderson secret")
+	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+
+	sesi3 = j.proses("login lineker secret")
+	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
