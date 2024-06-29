@@ -1,5 +1,6 @@
 import socket
 import json
+import base64
 
 TARGET_IP = "127.0.0.1"
 TARGET_PORT = 8889
@@ -32,6 +33,10 @@ class ChatClient:
             elif (command=='inbox'):
                 chatid=j[1].strip()
                 return self.inbox(chatid)
+            elif (command=='remote_get'):
+                return self.remote_get(self.tokenid,j[1],j[2])
+            elif (command=='remote_post'):
+                return self.remote_post(self.tokenid,j[1],j[2])
             else:
                 return "*Maaf, command tidak benar"
         except IndexError:
@@ -70,6 +75,33 @@ class ChatClient:
             return "username {} registered, token {} " .format(username, self.tokenid)
         else:
             return "Error, {}" . format(result['message'])
+
+    def remote_get(self, tokenid, chat_id, file_path):
+        command_str=f"getfile {tokenid} {chat_id} {file_path} \r\n"
+        hasil = self.sendstring(command_str)
+        if (hasil['status']=='OK'):
+            #proses file dalam bentuk base64 ke bentuk bytes
+            file_content = hasil['data']
+            data = base64.b64decode(file_content)
+            fp = open(file_path,'wb+')
+            fp.write(data)
+            fp.close()
+            return True
+        else:
+            print("Gagal")
+            return False    
+    
+    def remote_post(self, tokenid, chat_id, filepath):
+        with open(filepath, 'rb') as fp:
+            data = base64.b64encode(fp.read()).decode()
+        command_str = f"sendfile {tokenid} {chat_id} {data} {filepath} \r\n"
+        hasil = self.sendstring(command_str)
+        if hasil['status'] == 'OK':
+            print(hasil['data'])
+            return True
+        else:
+            print("Gagal")
+            return False
         
     def logout(self):
         if (self.tokenid==""):

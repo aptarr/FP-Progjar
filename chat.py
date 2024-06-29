@@ -248,6 +248,13 @@ class Chat:
 				filepath = j[4].strip()
 				logging.warning("SENDFILE: {} {} {}" . format(tokenid, chat_id, filepath))
 				return self.upload_file(tokenid, chat_id, filecontent, filepath)
+
+			elif (command == 'getfile'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				filepath = j[3].strip()
+				logging.warning("getfile: {} {} {}" . format(tokenid, chat_id, filepath))
+				return self.getfile(tokenid, chat_id, filepath)
 			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
@@ -490,6 +497,26 @@ class Chat:
 		self.chats[chat_id]['message'].append(message)
 		self.chats[chat_id]['updatedAt'] = message['timestamp']
 		return {'status': 'OK', 'message': f"File {filename} uploaded successfully"}
+
+	def getfile(self, tokenid, chat_id, file_path):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User not logged in'}
+		
+		users = self.sessions[tokenid]['userdetail']
+		
+		if chat_id not in users['chats']:
+			return {'status': 'ERROR', 'message': 'Chat not found'}
+		
+		filename = os.path.basename(file_path)
+		src_path = os.path.join(self.file_storage_path, filename)
+		
+		if not os.path.exists(src_path):
+			return {'status': 'ERROR', 'message': 'File not found'}
+		
+		with open(src_path, 'rb') as f_src:
+			file_content = base64.b64encode(f_src.read()).decode()
+		
+		return {'status': 'OK', 'data': file_content}
 		
 	def get_all_inbox(self, tokenid):
 		if tokenid not in self.sessions:
