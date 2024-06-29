@@ -1,7 +1,8 @@
 import flet as ft
+import json
 from cli import cc
 
-def group_chat():        
+def group_chat(id):        
     def back(e):
         e.page.go("/dashboard")
         
@@ -13,6 +14,23 @@ def group_chat():
         
     def download_file(e):
         e.page.go("/dashboard")
+        
+    def get_msgs():
+        result = cc.proses(f"inbox {id}")
+        if result.startswith("Error"):
+            return []
+        else:
+            return json.loads(result)
+        
+    def get_username():
+        result = cc.proses(f"getusername")
+        if result.startswith("Error"):
+            return []
+        else:
+            return json.loads(result)
+        
+    username = get_username()
+    chat_data = get_msgs()
     
     top_bar = ft.Container(
         content=ft.Row(
@@ -25,7 +43,7 @@ def group_chat():
                     ),
                     on_click=back
                 ),
-                ft.Text("Group Chat", size=18),
+                ft.Text(chat_data["name"], size=18),
             ],
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
@@ -38,156 +56,30 @@ def group_chat():
                     ft.Container(
                         content=ft.Column(
                             controls=[
-                                ft.Text("Yanto", size=14, color=ft.colors.WHITE),
-                                ft.Text(
-                                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed varius feugiat elementum.",
+                                ft.Text(message["sender"], size=14, color=ft.colors.WHITE), 
+                                ft.Text(message['message'],
                                     size=14,
                                     color=ft.colors.WHITE
                                 )
                             ]
-                        ),
-                        padding=ft.padding.all(10),
-                        border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.RED_300,
-                        margin=ft.margin.all(5),
-                        width=200,
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.START
-            ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=ft.Text(
-                            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed varius feugiat elementum.",
-                            size=14,
-                            color=ft.colors.BLACK
-                        ),
-                        padding=ft.padding.all(10),
-                        border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.GREY_200,
-                        margin=ft.margin.all(5),
-                        width=200,
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.END
-            ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=ft.Text(
-                            "Lorem ipsum dolor sit amet.",
-                            size=14,
-                            color=ft.colors.BLACK
-                        ),
-                        padding=ft.padding.all(10),
-                        border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.GREY_200,
-                        margin=ft.margin.all(5),
-                        width=200,
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.END
-            ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
+                        ) if message['sender'] != username else ft.Column(
                             controls=[
-                                ft.Text("Agus", size=14, color=ft.colors.WHITE),
-                                ft.Row(
-                                    controls=[
-                                        ft.Text("file.txt", size=14, color=ft.colors.WHITE),
-                                        ft.Text("200 Kb", size=14, color=ft.colors.WHITE),            
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                ),
-                                ft.Container(
-                                    content=ft.Row(
-                                        controls=[
-                                            ft.Text("Download", size=14, color=ft.colors.RED_300),
-                                            ft.Icon(ft.icons.DOWNLOAD, size=18, color=ft.colors.RED_300)
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                                    border_radius=ft.border_radius.all(15),
-                                    bgcolor=ft.colors.GREY_200,
-                                    margin=ft.margin.symmetric(vertical=5),
-                                    width=200,
-                                    on_click=download_file
-                                )
-                            ]
-                        ),
-                        padding=ft.padding.all(10),
-                        border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.RED_300,
-                        margin=ft.margin.all(5),
-                        width=200,
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.START
-            ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.Text("Agus", size=14, color=ft.colors.WHITE),
-                                ft.Text(
-                                    "Lorem ipsum dolor sit amet.",
+                                ft.Text(message['message'],
                                     size=14,
-                                    color=ft.colors.WHITE
+                                    color=ft.colors.BLACK
                                 )
                             ]
                         ),
                         padding=ft.padding.all(10),
                         border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.RED_300,
+                        bgcolor=ft.colors.RED_300 if message['sender'] != username else ft.colors.GREY_200,
                         margin=ft.margin.all(5),
                         width=200,
                     )
                 ],
-                alignment=ft.MainAxisAlignment.START
-            ),
-            ft.Row(
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            controls=[
-                                ft.Row(
-                                    controls=[
-                                        ft.Text("file.txt", size=14, color=ft.colors.RED_300),
-                                        ft.Text("200 Kb", size=14, color=ft.colors.RED_300),            
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                ),
-                                ft.Container(
-                                    content=ft.Row(
-                                        controls=[
-                                            ft.Text("Download", size=14, color=ft.colors.RED_300),
-                                            ft.Icon(ft.icons.DOWNLOAD, size=18, color=ft.colors.RED_300)
-                                        ],
-                                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                                    ),
-                                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                                    border_radius=ft.border_radius.all(15),
-                                    bgcolor=ft.colors.RED_50,
-                                    margin=ft.margin.symmetric(vertical=5),
-                                    width=200,
-                                    on_click=download_file
-                                )
-                            ]
-                        ),
-                        padding=ft.padding.all(10),
-                        border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.GREY_200,
-                        margin=ft.margin.all(5),
-                        width=200,
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.END
+                alignment=ft.MainAxisAlignment.START if message['sender'] != username else ft.MainAxisAlignment.END
             )
+            for message in chat_data['message']
         ],
         scroll=ft.ScrollMode.ALWAYS,
         expand=True

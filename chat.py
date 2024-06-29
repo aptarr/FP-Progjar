@@ -5,12 +5,12 @@ import uuid
 import logging
 import socket
 import threading
+import base64
 from queue import Queue
 from datetime import datetime
 
 class Chat:
 	def __init__(self):
-		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.realm_auth = "secret1"
 		self.realm_ip = "172.16.16.101"
 
@@ -86,6 +86,11 @@ class Chat:
 			'member': ['messi', 'henderson', 'lineker', 'hmd'],
 			'updatedAt': '2021-10-10 10:10:10'
 		}
+		# Path to store uploaded files
+		self.file_storage_path = 'uploads'
+		if not os.path.exists(self.file_storage_path):
+			os.makedirs(self.file_storage_path)
+
 
 		self.realms = {}
 		# realms:
@@ -139,6 +144,11 @@ class Chat:
 				logging.warning("SYNC: addUserRealm {} {} {}" . format(auth, ipRealm, username))
 				return self.add_user_realm(auth, ipRealm, username)
 			
+			elif (command == 'getusername'):
+				tokenid=j[1].strip()
+				logging.warning("GETUSERNAME: {}" . format(tokenid))
+				return self.get_username(tokenid)
+			
 			elif (command == 'sendmsg'):
 				tokenid=j[1].strip()
 				chat_id=j[2].strip()
@@ -156,35 +166,39 @@ class Chat:
 				message = " ".join(j[6:])
 				message = message[:-4]
 				logging.warning("SYNC: syncmsg {} {} {} {} {} {}" . format(auth, ipRealm, chat_id, sender, timestamp, message))
-				result = self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
-				print(self.chats[chat_id])
-				return result
+				return self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
+			
 			elif(command == 'addRealmChat'):
-				chat_id = j[1].strip()
-				username = j[2].strip()
-				logging.warning("SYNC: addRealmChat {} {} {}" . format(chat_id, chat_dict, username))
-				result = self.add_realm_chats(chat_id, username)
-				return result
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				chat_id = j[3].strip()
+				username = j[4].strip()
+				logging.warning("SYNC: addRealmChat {} {} {} {}" . format(auth, ipRealm, chat_id, username))
+				return self.add_realm_chats(auth, ipRealm, chat_id, username)
+			
 			elif(command == 'changeSelfChat'):
-				chat_id = j[1].strip()
-				chat_dict = ' '.join(j[2:]).strip()
-				logging.warning("SYNC: changeSelfChat {} {}" . format(chat_id, chat_dict))
-			elif (command == 'createGroup'):#type, group_name, members banyak
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				chat_id = j[3].strip()
+				chat_dict = ' '.join(j[4:]).strip()
+				logging.warning("SYNC: changeSelfChat {} {} {} {}" . format(auth, ipRealm, chat_id, chat_dict))
+				return self.change_self_chat(auth, ipRealm, chat_id, chat_dict)
+
+			elif (command == 'createGroup'):
 				tokenid = j[1].strip()
 				type= j[2].strip()
 				group_name = j[3].strip()
 				password = j[4].strip()
 				logging.warning("CREATE_GROUP: createGroup {} {} {}" . format(type, group_name, password))
-				result = self.create_chat(tokenid, type, group_name, password = password)
-				return result
-			elif(command == 'createChat'): #type, member
+				return self.create_chat(tokenid, type, group_name, password = password)
+			
+			elif(command == 'createChat'):
 				tokenid = j[1].strip()
 				type = j[2].strip()
 				group_name = j[3].strip()
 				member = j[3].strip()
-				logging.warning("CREATE_CHAT: createGroup {} {} {}" . format(type, group_name, member))
-				result = self.create_chat(type, group_name, member = member)
-				return result
+				logging.warning("CREATE_CHAT: createChat {} {} {}" . format(type, group_name, member))
+				return self.create_chat(tokenid, type, group_name, member = member)
 			
 			elif (command == 'inboxall'):
 				tokenid=j[1].strip()
@@ -213,6 +227,15 @@ class Chat:
 				logging.warning("JOIN_GROUP: {} {} {}" . format(tokenid, group_id, password))
 				result = self.join_group(tokenid, group_name, password)	
 				return result
+			
+			elif (command == 'sendfile'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				filecontent = j[3].strip()
+				filepath = j[4].strip()
+				logging.warning("SENDFILE: {} {} {}" . format(tokenid, chat_id, filepath))
+				return self.upload_file(tokenid, chat_id, filecontent, filepath)
+			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
 		except KeyError:
@@ -221,21 +244,23 @@ class Chat:
 			return {'status': 'ERROR', 'message': '--Protocol Tidak Benar'}
 
 	def sendstring(self, string, targetIp, targetPort):
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_address = (targetIp,targetPort)
-		self.sock.connect(server_address)
+		sock.connect(server_address)
 		try:
-			self.sock.sendall(string.encode())
+			sock.sendall(string.encode())
 			receivemsg = ""
 			while True:
-				data = self.sock.recv(1024)
+				data = sock.recv(1024)
 				print("diterima dari server",data)
 				if (data):
 					receivemsg = "{}{}" . format(receivemsg,data.decode())  #data harus didecode agar dapat di operasikan dalam bentuk string
 					if receivemsg[-4:]=='\r\n\r\n':
 						print("end of string")
+						sock.close()
 						return json.loads(receivemsg)
 		except:
-			self.sock.close()
+			sock.close()
 			return { 'status' : 'ERROR', 'message' : 'Gagal'}
 
 	def check_user(self, username):
@@ -284,15 +309,31 @@ class Chat:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
 		del self.sessions[tokenid]
 		return {'status': 'OK', 'message': 'User Berhasil Logout'}
-	def add_realm_chats(self, chat_id, username): # memasukkan chat_id kedalam parameter user
+	
+	def get_username(self, tokenid):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		return {'status': 'OK', 'data': self.sessions[tokenid]['username']}
+	
+	def add_realm_chats(self, auth, ipRealm, chat_id, username): # memasukkan chat_id kedalam parameter user
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
+		
+		if chat_id not in self.chats:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+
 		self.users[username]['chats'].append(chat_id)
 		# self.chats[chat_id]= chat_dict
 		return { 'status': 'OK', 'message': f'Berhasil menambahkan chat {chat_id} kedalam {self.realm_ip} pada user {username}' }
-	def change_self_chat(self, chat_id, chat_dict):
+	
+	def change_self_chat(self, auth, ipRealm, chat_id, chat_dict):
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
+
 		self.chats[chat_id] = chat_dict
 		return { 'status': 'OK', 'message': f'Berhasil mengubah chat chats dengan chat_id {chat_id} kedalam {self.realm_ip}' }
 
-	def create_chat(self,tokenid, type, group_name, member = None, password = None):
+	def create_chat(self, tokenid, type, group_name, member = None, password = None):
 		if tokenid not in self.sessions:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
 		members = []
@@ -319,14 +360,20 @@ class Chat:
 		# melakukan broadcast chat group ke semua user
 		if type == 'group':
 			for ip,val in self.realms.items():
-				string="changeSelfChat {} {} \r\n" . format(chat_id, chat_dict)
+				string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_dict)
 				self.sendstring(string, ip, self.realms[ip]['port'])
+		else:
+			for ip,val in self.realms.items():
+				if member in val['users']:
+					string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_dict)
+					self.sendstring(string, ip, self.realms[ip]['port'])
+
 		# untuk member akan disambungkan ke realm yang bersangkutan
 		if member is not None: # jika ada member
 			if  member not in self.users.keys(): # jika member tidak dari realm ini
 				for ip,val in self.realms.items(): # mencari di realm lain
 					if member in val['users']:
-						string="addUserChat {} {} {} \r\n" . format(chat_id, member, chat_dict)
+						string="addRealmChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, member)
 						result = self.sendstring(string, ip, self.realms[ip]['port'])
 						if result['status']=='OK':
 							return "{}" . format(result['message'])
@@ -335,9 +382,22 @@ class Chat:
 						break
 			else:
 				self.users[member]['chats'].append(chat_id)
-		return { 'status': 'OK', 'message': f'Berhasil membuat chat' }
-
-		
+		if type == 'private':
+			for member in members:
+				if member != username:
+					chat_name = member
+					break
+		else:
+			chat_name = group_name
+		response = {
+			'id': chat_id,
+			'type': chat_dict["type"],
+			'name': chat_name,
+			'message': chat_dict["message"],
+			'members': chat_dict["members"],
+			'UpdatedAt': chat_dict["UpdatedAt"]
+		}
+		return { 'status': 'OK', 'message': f'Berhasil membuat chat', 'data': response}
 
 	def sync_message(self, auth, ipRealm, chat_id, sender, message, timestamp):
 		if self.realms[ipRealm]['auth'] != auth:
@@ -370,6 +430,7 @@ class Chat:
 		self.chats[chat_id]['message'].append({
 			'sender': sender,
 			'message': message,
+			'isFile': False,
 			'timestamp': timestamp
 		})
 
@@ -388,16 +449,52 @@ class Chat:
 
 		return {'status': 'OK', 'message': 'Pesan berhasil dikirim'}
 
+	def upload_file(self, tokenid, chat_id, file_content, file_path):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User not logged in'}
+		
+		users = self.sessions[tokenid]['userdetail']
+		
+		if chat_id not in users['chats']:
+			return {'status': 'ERROR', 'message': 'Chat not found'}
+		
+		filename = os.path.basename(file_path)
+		dest_path = os.path.join(self.file_storage_path, filename)
+		
+		timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+		sender = self.sessions[tokenid]['username']
+		
+		with open(dest_path, 'wb') as f_dest:
+			f_dest.write(base64.b64decode(file_content))
+					
+		message = {
+			'sender': sender,
+			'message': filename,
+			'isFile': True,
+			'timestamp': timestamp
+			}
+		
+		self.chats[chat_id]['message'].append(message)
+		self.chats[chat_id]['updatedAt'] = message['timestamp']
+		return {'status': 'OK', 'message': f"File {filename} uploaded successfully"}
+		
 	def get_all_inbox(self, tokenid):
 		if tokenid not in self.sessions:
 			return {'status': 'ERROR', 'message': 'User Belum Login'}
 		users = self.sessions[tokenid]['userdetail']
 		inbox = []
 		for chat_id in users['chats']:
+			if self.chats[chat_id]['type'] == 'private':
+				for member in self.chats[chat_id]['member']:
+					if member != self.sessions[tokenid]['username']:
+						chat_name = member
+						break
+			else:
+				chat_name = self.chats[chat_id]['name']
 			inbox.append({
 				"id": chat_id,
 				"type": self.chats[chat_id]['type'],
-				"name": self.chats[chat_id]['name'],
+				"name": chat_name,
 				"message": self.chats[chat_id]['message'][-1],
 				"member": self.chats[chat_id]['member'],
 				"updatedAt": self.chats[chat_id]['updatedAt']
@@ -411,11 +508,19 @@ class Chat:
 
 		if chat_id not in users['chats']:
 			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+		
+		if self.chats[chat_id]['type'] == 'private':
+			for member in self.chats[chat_id]['member']:
+				if member != self.sessions[tokenid]['username']:
+					chat_name = member
+					break
+		else:
+			chat_name = self.chats[chat_id]['name']
 
 		inbox = {
 			"id": chat_id,
 			"type": self.chats[chat_id]['type'],
-			"name": self.chats[chat_id]['name'],
+			"name": chat_name,
 			"message": self.chats[chat_id]['message'],
 			"member": self.chats[chat_id]['member'],
 			"updatedAt": self.chats[chat_id]['updatedAt']
@@ -455,6 +560,12 @@ class Chat:
 
 if __name__=="__main__":
 	j = Chat()
+
+	# testing getusername
+	sesi1 = j.proses("login messi secret ")
+	print(j.proses("getusername {} ".format(sesi1['tokenid'])))
+	
+	print(j.proses("getusername {} ".format("FAKE_TOKENID")))
 	
 	# testing register
 	sesi = j.proses("register geprek secret ")
@@ -470,7 +581,7 @@ if __name__=="__main__":
 
 	sesi2 = j.proses("login henderson secret")
 	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '1')))
 
 	sesi3 = j.proses("login lineker secret")
 	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
@@ -484,3 +595,12 @@ if __name__=="__main__":
 	sesi2 = j.proses("login lineker secret")
 	print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
 	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+
+	# testing createGroup dan createChat
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("createGroup {} group group1 secret".format(sesi1['tokenid'])))
+	print(j.chats)
+
+	sesi2 = j.proses("login henderson secret")
+	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
+	print(j.chats)
