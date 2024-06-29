@@ -8,23 +8,28 @@ import threading
 from queue import Queue
 from datetime import datetime
 
-
 class Chat:
 	def __init__(self):
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# sessions:
-		# 	sessionid: {uuid: users}
-		self.sessions={}
 		self.realm_auth = "secret1"
-		self.realm_ip = "127.0.0.1"
+		self.realm_ip = "172.16.16.101"
+
+		# sessions:
+		# 	sessionid
+		# 	username
+		# 	userdetail
+		self.sessions={}
+
 		self.users = {}
 		# 	users:
 		# 		name
 		# 		password
 		# 		chat: [] (chats id)
-		self.users['messi']={'password': 'secret', 'chats' : []}
-		self.users['henderson']={'password': 'secret', 'chats': []}
-		self.users['lineker']={'password': 'secret','chats': []}
+		self.users['messi']={'password': 'secret', 'chats' : ['1', '2']}
+		self.users['henderson']={'password': 'secret', 'chats': ['1', '2']}
+		self.users['lineker']={'password': 'secret', 'chats': ['2']}
+		# self.users['hmd']={'password': 'secret', 'chats' : []}
+		# self.users['hfd']={'password': 'secret', 'chats': []}
 
 		# 	chats:
 		# 		id
@@ -35,12 +40,52 @@ class Chat:
 		# 		updatedAt: last message timestamp
 
 		# 	messages:
-		# 		from
-		# 		to
+		# 		sender
 		# 		message
-		# 		status: read/unread
 		# 		timestamp
 		self.chats = {}
+		self.chats['1'] = {
+			'type': 'private',
+			'name': 'messi',
+			'message': [
+				{
+					'sender': 'messi',
+					'message': 'Hello',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'sender': 'henderson',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				}
+			],
+			'member': ['messi', 'henderson'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
+
+		self.chats['2'] = {
+			'type': 'group',
+			'name': 'group1',
+			'message': [
+				{
+					'sender': 'messi',
+					'message': 'Hello',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'sender': 'henderson',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				},
+				{
+					'sender': 'lineker',
+					'message': 'Hi',
+					'timestamp': '2021-10-10 10:10:10'
+				}
+			],
+			'member': ['messi', 'henderson', 'lineker', 'hmd'],
+			'updatedAt': '2021-10-10 10:10:10'
+		}
 
 		self.realms = {}
 		# realms:
@@ -48,25 +93,25 @@ class Chat:
 		# 	port
 		# 	users
 		#   auth
-		# self.realms["127.0.0.2"] = {
+		# self.realms["172.16.16.101"] = {
 		# 		"port": 8889,
 		# 		"users": [
-		# 			"hmd",
-		# 			"hfd"
+		# 			"messi",
+		# 			"henderson",
+        #             "lineker"
 		# 		],
-		# 		"auth": "secret2"
+		# 		"auth": "secret1"
 		# 	}
-		# self.realms["127.0.0.3"] = {
-		# 		"port": 8889,
-		# 		"users": [
-		# 			"apt",
-		# 			"hq",
-		# 			"rzn"
-		# 		],
-		# 		"auth": "secret3"
-		# 	}
+		self.realms["172.16.16.102"] = {
+				"port": 8889,
+				"users": [
+					"hmd",
+					"hfd"
+				],
+				"auth": "secret2"
+			}
 		
-  
+
 	def proses(self,data):
 		j=data.split(" ")
 		try:
@@ -92,7 +137,27 @@ class Chat:
 				ipRealm=j[2].strip()
 				username=j[3].strip()
 				logging.warning("SYNC: addUserRealm {} {} {}" . format(auth, ipRealm, username))
-				result = self.add_user_realm(auth, ipRealm, username)
+				return self.add_user_realm(auth, ipRealm, username)
+			
+			elif (command == 'sendmsg'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				message = " ".join(j[3:])
+				message = message[:-4]
+				logging.warning("SENDMSG: {}" . format(tokenid, chat_id, message))
+				return self.send_message(tokenid, chat_id, message)
+			
+			elif (command == 'syncmsg'):
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				chat_id=j[3].strip()
+				sender=j[4].strip()
+				timestamp=j[5].strip()
+				message = " ".join(j[6:])
+				message = message[:-4]
+				logging.warning("SYNC: syncmsg {} {} {} {} {} {}" . format(auth, ipRealm, chat_id, sender, timestamp, message))
+				result = self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
+				print(self.chats[chat_id])
 				return result
 			elif(command == 'addRealmChat'):
 				chat_id = j[1].strip()
@@ -120,6 +185,18 @@ class Chat:
 				logging.warning("CREATE_CHAT: createGroup {} {} {}" . format(type, group_name, member))
 				result = self.create_chat(type, group_name, member = member)
 				return result
+			
+			elif (command == 'inboxall'):
+				tokenid=j[1].strip()
+				logging.warning("INBOXALL: {}" . format(tokenid))
+				return self.get_all_inbox(tokenid)
+			
+			elif (command == 'inbox'):
+				tokenid=j[1].strip()
+				chat_id=j[2].strip()
+				logging.warning("INBOX: {} {}" . format(tokenid, chat_id))
+				return self.get_inbox(tokenid, chat_id)
+			
 			else:
 				return {'status': 'ERROR', 'message': '**Protocol Tidak Benar'}
 		except KeyError:
@@ -149,7 +226,7 @@ class Chat:
 		if (username in self.users):
 			return True
 		for realm in self.realms:
-			if username in realm['users']:
+			if username in self.realms[realm]['users']:
 				return True
 		return False
 
@@ -164,7 +241,7 @@ class Chat:
 
 	def add_user_realm(self, auth, ipRealm, username):
 		if self.realms[ipRealm]['auth'] != auth:
-			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Salah' }
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
 		self.realms[ipRealm]['users'].append(username)
 		return { 'status': 'OK', 'message': f'Berhasil menambahkan {username} kedalam {ipRealm} pada realm {self.realm_ip}' }
 
@@ -245,6 +322,90 @@ class Chat:
 		return { 'status': 'OK', 'message': f'Berhasil membuat chat' }
 
 		
+
+	def sync_message(self, auth, ipRealm, chat_id, sender, message, timestamp):
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
+		
+		if chat_id not in self.chats:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+
+		self.chats[chat_id]['message'].append({
+			'sender': sender,
+			'message': message,
+			'timestamp': timestamp
+		})
+
+		self.chats[chat_id]['updatedAt'] = timestamp
+
+		return {'status': 'OK', 'message': 'Pesan berhasil disinkronisasi'}
+
+	def send_message(self, tokenid, chat_id, message):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		users = self.sessions[tokenid]['userdetail']
+
+		if chat_id not in users['chats']:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+		
+		timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+		sender = self.sessions[tokenid]['username']
+
+		self.chats[chat_id]['message'].append({
+			'sender': sender,
+			'message': message,
+			'timestamp': timestamp
+		})
+
+		self.chats[chat_id]['updatedAt'] = timestamp
+
+		# sync new message across realms
+		for ipRealm in self.realms:
+			for member in self.chats[chat_id]['member']:
+				if member in self.realms[ipRealm]['users']:
+					string="syncmsg {} {} {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, sender, timestamp, message)
+					result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
+					if result['status']=='OK':
+						break
+					else:
+						return "Error, {}" . format(result['message'])
+
+		return {'status': 'OK', 'message': 'Pesan berhasil dikirim'}
+
+	def get_all_inbox(self, tokenid):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		users = self.sessions[tokenid]['userdetail']
+		inbox = []
+		for chat_id in users['chats']:
+			inbox.append({
+				"id": chat_id,
+				"type": self.chats[chat_id]['type'],
+				"name": self.chats[chat_id]['name'],
+				"message": self.chats[chat_id]['message'][-1],
+				"member": self.chats[chat_id]['member'],
+				"updatedAt": self.chats[chat_id]['updatedAt']
+			})
+		return {'status': 'OK', 'data': inbox}	
+	
+	def get_inbox(self, tokenid, chat_id):
+		if tokenid not in self.sessions:
+			return {'status': 'ERROR', 'message': 'User Belum Login'}
+		users = self.sessions[tokenid]['userdetail']
+
+		if chat_id not in users['chats']:
+			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
+
+		inbox = {
+			"id": chat_id,
+			"type": self.chats[chat_id]['type'],
+			"name": self.chats[chat_id]['name'],
+			"message": self.chats[chat_id]['message'],
+			"member": self.chats[chat_id]['member'],
+			"updatedAt": self.chats[chat_id]['updatedAt']
+		}
+		return {'status': 'OK', 'data': inbox}
+
 if __name__=="__main__":
 	j = Chat()
 	
@@ -254,3 +415,25 @@ if __name__=="__main__":
 
 	sesi2 = j.proses("register geprek secret ")
 	print(j.users)
+
+	# testing inbox dan inboxall
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+
+	sesi2 = j.proses("login henderson secret")
+	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+
+	sesi3 = j.proses("login lineker secret")
+	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
+
+	# testing sendmsg
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("sendmsg {} {} {}".format(sesi1['tokenid'], '1', 'testing send msg')))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+
+	sesi2 = j.proses("login lineker secret")
+	print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))

@@ -5,7 +5,7 @@ def login():
     def handle_login(e):
         username = username_field.value
         password = password_field.value
-        result = cc.proses(f"auth {username} {password}")
+        result = cc.proses(f"login {username} {password}")
         if cc.tokenid:
             e.page.go("/dashboard")
         else:
