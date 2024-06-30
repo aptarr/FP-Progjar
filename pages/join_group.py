@@ -1,11 +1,18 @@
 import flet as ft
+import json
 from cli import cc
 
-def join_group():
+def join_group(id, name):
     def handle_join_group(e):
         groupname = groupname_field.value
         password = password_field.value
-        e.page.go("/group_chat")
+        
+        result = cc.proses(f"joingroup {id} {password}")
+        if result.startswith("joined"):
+            e.page.go(f"/group_chat/{id}")
+        else:
+            status.value = result
+            e.page.update()
         
     def back(e):
         e.page.go("/new_chat")
@@ -29,7 +36,7 @@ def join_group():
     )
     groupname_field = ft.TextField(
         label="Group Name",
-        value="groupname", 
+        value=name, 
         width=300, 
         height=40, 
         bgcolor="#d84d4d, 0.2", 

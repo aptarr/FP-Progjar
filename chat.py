@@ -139,14 +139,14 @@ class Chat:
 		# 		],
 		# 		"auth": "secret1"
 		# 	}
-		self.realms["172.16.16.102"] = {
-				"port": 8889,
-				"users": [
-					"hmd",
-					"hfd"
-				],
-				"auth": "secret2"
-			}
+		# self.realms["172.16.16.102"] = {
+		# 		"port": 8889,
+		# 		"users": [
+		# 			"hmd",
+		# 			"hfd"
+		# 		],
+		# 		"auth": "secret2"
+		# 	}
 		
 
 	def proses(self,data):
@@ -185,7 +185,7 @@ class Chat:
 				tokenid=j[1].strip()
 				chat_id=j[2].strip()
 				message = " ".join(j[3:])
-				message = message[:-4]
+				message = message[:-3]
 				logging.warning("SENDMSG: {}" . format(tokenid, chat_id, message))
 				return self.send_message(tokenid, chat_id, message)
 			
@@ -196,7 +196,7 @@ class Chat:
 				sender=j[4].strip()
 				timestamp=j[5].strip()
 				message = " ".join(j[6:])
-				message = message[:-4]
+				message = message[:-3]
 				logging.warning("SYNC: syncmsg {} {} {} {} {} {}" . format(auth, ipRealm, chat_id, sender, timestamp, message))
 				return self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
 			
@@ -663,66 +663,66 @@ if __name__=="__main__":
 	j = Chat()
 
 	# testing getusername
-	sesi1 = j.proses("login messi secret ")
-	print(j.proses("getusername {} ".format(sesi1['tokenid'])))
+	# sesi1 = j.proses("login messi secret ")
+	# print(j.proses("getusername {} ".format(sesi1['tokenid'])))
 	
-	print(j.proses("getusername {} ".format("FAKE_TOKENID")))
+	# print(j.proses("getusername {} ".format("FAKE_TOKENID")))
 	
-	# testing register
-	sesi = j.proses("register geprek secret ")
-	print(j.users)
+	# # testing register
+	# sesi = j.proses("register geprek secret ")
+	# print(j.users)
 
-	sesi2 = j.proses("register geprek secret ")
-	print(j.users)
+	# sesi2 = j.proses("register geprek secret ")
+	# print(j.users)
 
-	# testing inbox dan inboxall
-	sesi1 = j.proses("login messi secret")
-	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+	# # testing inbox dan inboxall
+	# sesi1 = j.proses("login messi secret")
+	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	sesi2 = j.proses("login henderson secret")
-	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '1')))
+	# sesi2 = j.proses("login henderson secret")
+	# print(j.proses("inboxall {}".format(sesi2['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '1')))
 
-	sesi3 = j.proses("login lineker secret")
-	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
-	print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
+	# sesi3 = j.proses("login lineker secret")
+	# print(j.proses("inboxall {}".format(sesi3['tokenid'])))
+	# print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
 
 	# testing sendmsg
 	sesi1 = j.proses("login messi secret")
-	print(j.proses("sendmsg {} {} {}".format(sesi1['tokenid'], '1', 'testing send msg')))
+	print(j.proses("sendmsg {} {} {} \r\n".format(sesi1['tokenid'], '1', 'testing send msg')))
 	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	sesi2 = j.proses("login lineker secret")
-	print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
-	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+	# sesi2 = j.proses("login lineker secret")
+	# print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
+	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
 
 	# testing createGroup dan createChat
-	sesi1 = j.proses("login messi secret")
-	c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
-	print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
-	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	# sesi1 = j.proses("login messi secret")
+	# c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
+	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
+	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
 
-	sesi2 = j.proses("login henderson secret")
-	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
-	print(j.chats)
+	# sesi2 = j.proses("login henderson secret")
+	# print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
+	# print(j.chats)
 
-	# testing joinGroup
-	sesi1 = j.proses("login messi secret")
-	print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
-	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
-	print(j.chats['3'])
+	# # testing joinGroup
+	# sesi1 = j.proses("login messi secret")
+	# print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
+	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	# print(j.chats['3'])
 
-	print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
-	print(j.chats['3'])
+	# print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
+	# print(j.chats['3'])
 
-	sesi2 = j.proses("login lineker secret")
-	print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
-	print(j.chats['3'])
+	# sesi2 = j.proses("login lineker secret")
+	# print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
+	# print(j.chats['3'])
 	
-	# testing getNewChat
-	sesi1 = j.proses("login lineker secret")
-	print(j.proses("getNewChat {}".format(sesi1['tokenid'])))
+	# # testing getNewChat
+	# sesi1 = j.proses("login lineker secret")
+	# print(j.proses("getNewChat {}".format(sesi1['tokenid'])))
 
-	sesi2 = j.proses("login messi secret")
-	print(j.proses("getNewChat {}".format(sesi2['tokenid'])))
+	# sesi2 = j.proses("login messi secret")
+	# print(j.proses("getNewChat {}".format(sesi2['tokenid'])))

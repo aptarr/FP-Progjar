@@ -10,7 +10,11 @@ def group_chat(id):
         e.page.go("/dashboard")
         
     def send_message(e):
-        e.page.go("/dashboard")
+        message = message_field.value
+        cc.proses(f"sendmsg {id} {message}")
+        message_field.value = ""
+        update_chat()
+        e.page.update()
         
     def download_file(e):
         e.page.go("/dashboard")
@@ -28,6 +32,42 @@ def group_chat(id):
             return []
         else:
             return json.loads(result)
+        
+    def update_chat():
+        nonlocal chat_data, chat_bubbles
+        chat_data = get_msgs()
+        chat_bubbles.controls = [
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Column(
+                            controls=[
+                                ft.Text(message["sender"], size=14, color=ft.colors.WHITE), 
+                                ft.Text(message['message'],
+                                    size=14,
+                                    color=ft.colors.WHITE
+                                )
+                            ]
+                        ) if message['sender'] != username else ft.Column(
+                            controls=[
+                                ft.Text(message['message'],
+                                    size=14,
+                                    color=ft.colors.BLACK
+                                )
+                            ]
+                        ),
+                        padding=ft.padding.all(10),
+                        border_radius=ft.border_radius.all(15),
+                        bgcolor=ft.colors.RED_300 if message['sender'] != username else ft.colors.GREY_200,
+                        margin=ft.margin.all(5),
+                        width=200,
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START if message['sender'] != username else ft.MainAxisAlignment.END
+            )
+            for message in chat_data['message']
+        ]
+        chat_bubbles.update()
         
     username = get_username()
     chat_data = get_msgs()

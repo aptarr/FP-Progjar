@@ -10,7 +10,11 @@ def private_chat(id):
         e.page.go("/dashboard")
         
     def send_message(e):
-        e.page.go("/dashboard")
+        message = message_field.value
+        cc.proses(f"sendmsg {id} {message}")
+        message_field.value = ""
+        update_chat()
+        e.page.update()
         
     def download_file(e):
         e.page.go("/dashboard")
@@ -22,6 +26,31 @@ def private_chat(id):
         else:
             return json.loads(result)
         
+    def update_chat():
+        nonlocal chat_data, chat_bubbles
+        chat_data = get_msgs()
+        chat_bubbles.controls = [
+            ft.Row(
+                controls=[
+                    ft.Container(
+                        content=ft.Text(
+                            message['message'],
+                            size=14,
+                            color=ft.colors.WHITE if message['sender'] == chat_data['name'] else ft.colors.BLACK
+                        ),
+                        padding=ft.padding.all(10),
+                        border_radius=ft.border_radius.all(15),
+                        bgcolor=ft.colors.RED_300 if message['sender'] == chat_data['name'] else ft.colors.GREY_200,
+                        margin=ft.margin.all(5),
+                        width=200,
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.START if message['sender'] == chat_data['name'] else ft.MainAxisAlignment.END
+            )
+            for message in chat_data['message']
+        ]
+        chat_bubbles.update()
+    
     chat_data = get_msgs()
     
     top_bar = ft.Container(
@@ -35,7 +64,7 @@ def private_chat(id):
                     ),
                     on_click=back
                 ),
-                ft.Text([member for member in chat_data["member"] if member != chat_data["name"]][0], size=18)
+                ft.Text(chat_data['name'], size=18)
             ],
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         ),
@@ -49,16 +78,16 @@ def private_chat(id):
                         content=ft.Text(
                             message['message'],
                             size=14,
-                            color=ft.colors.WHITE if message['sender'] != chat_data['name'] else ft.colors.BLACK
+                            color=ft.colors.WHITE if message['sender'] == chat_data['name'] else ft.colors.BLACK
                         ),
                         padding=ft.padding.all(10),
                         border_radius=ft.border_radius.all(15),
-                        bgcolor=ft.colors.RED_300 if message['sender'] != chat_data['name'] else ft.colors.GREY_200,
+                        bgcolor=ft.colors.RED_300 if message['sender'] == chat_data['name'] else ft.colors.GREY_200,
                         margin=ft.margin.all(5),
                         width=200,
                     )
                 ],
-                alignment=ft.MainAxisAlignment.START if message['sender'] != chat_data['name'] else ft.MainAxisAlignment.END
+                alignment=ft.MainAxisAlignment.START if message['sender'] == chat_data['name'] else ft.MainAxisAlignment.END
             )
             for message in chat_data['message']
         ],

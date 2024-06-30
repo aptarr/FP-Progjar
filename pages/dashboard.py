@@ -111,8 +111,8 @@ def dashboard():
                     profile_icon,
                     ft.Column(
                         controls=[
-                            ft.Text(chat["name"], size=16) if chat ["type"] == "group" else ft.Text(chat["message"]["sender"], size=16),
-                            ft.Text(chat["message"]["message"], size=14, color=ft.colors.GREY)
+                            ft.Text(chat["name"], size=16),
+                            ft.Text(chat["message"]["message"], size=14, color=ft.colors.GREY) if chat["message"] else ft.Text()
                         ],
                         spacing=5,
                         alignment=ft.MainAxisAlignment.START

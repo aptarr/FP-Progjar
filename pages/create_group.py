@@ -1,4 +1,5 @@
 import flet as ft
+import json
 from cli import cc
 
 def create_group():
@@ -8,7 +9,15 @@ def create_group():
         confirm = confirm_field.value
         
         if password == confirm:
-            e.page.go("/group_chat")
+            result = cc.proses(f"creategroup {groupname} {password}")
+            
+            if result.startswith('Error'):
+                status.value = result
+                e.page.update()
+            else:
+                data = json.loads(result)
+                id = data["id"]
+                e.page.go(f"/group_chat/{id}")
         else:
             status.value = 'Confirm password salah'
             e.page.upate()

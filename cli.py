@@ -33,6 +33,25 @@ class ChatClient:
             elif (command=='inbox'):
                 chatid=j[1].strip()
                 return self.inbox(chatid)
+            elif (command=='getnewchat'):
+                return self.getnewchat()
+            elif (command=='createchat'):
+                username=j[1].strip()
+                return self.createchat(username)
+            elif (command=='creategroup'):
+                groupname=j[1].strip()
+                password=j[2].strip()
+                return self.creategroup(groupname, password)
+            elif (command=='joingroup'):
+                groupid=j[1].strip()
+                password=j[2].strip()
+                return self.joingroup(groupid, password)
+            elif (command=='sendmsg'):
+                chatid=j[1].strip()
+                message=""
+                for w in j[2:]:
+                   message="{} {}" . format(message,w)
+                return self.sendmsg(chatid,message)
             elif (command=='sendfile'):
                 return self.remote_post(self.tokenid,j[1],j[2])
             elif (command=='getfile'):
@@ -141,7 +160,58 @@ class ChatClient:
             return "{}" . format(json.dumps(result['data']))
         else:
             return "Error, {}".format(result["message"])
+        
+    def getnewchat(self):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="getNewChat {} \r\n" .format(self.tokenid)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
+        
+    def createchat(self, username):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="createChat {} private {} \r\n" .format(self.tokenid, username)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
 
+    def creategroup(self, groupname, password):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="createGroup {} group {} {} \r\n" .format(self.tokenid, groupname, password)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "{}" . format(json.dumps(result['data']))
+        else:
+            return "Error, {}".format(result["message"])
+
+    def joingroup(self, groupid, password):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="joinGroup {} {} {} \r\n" .format(self.tokenid, groupid, password)
+        result = self.sendstring(string)
+        if result["status"] == "OK":
+            return "joined group"
+        else:
+            return "Error, {}".format(result["message"])
+        
+    def sendmsg(self, chatid, message):
+        if (self.tokenid==""):
+            return "Error, not authorized"
+        string="sendmsg {} {}{} \r\n" . format(self.tokenid,chatid,message)
+        print(string)
+        result = self.sendstring(string)
+        if result['status']=='OK':
+            return "message sent"
+        else:
+            return "Error, {}" . format(result['message'])
+        
 cc = ChatClient()
 
 if __name__=="__main__":
