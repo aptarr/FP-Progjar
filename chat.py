@@ -391,14 +391,14 @@ class Chat:
 			members.append(member)
 		now = datetime.now()
 		current_time = now.strftime("%Y-%m-%d %H:%M:%S")
-		chat_id = str(uuid.uuid4())
+		chat_id = str(uuid.uuid4()).replace('-', '')[:10]
 		chat_dict = {
 			'type': type,
 			'name': group_name,
 			'password': password,
 			'message': {},
-			'members': members,
-			'UpdatedAt': current_time
+			'member': members,
+			'updatedAt': current_time
 		}
 		self.chats[chat_id] = chat_dict
 		user['userdetail']['chats'].append(chat_id)
@@ -439,8 +439,8 @@ class Chat:
 			'type': chat_dict["type"],
 			'name': chat_name,
 			'message': chat_dict["message"],
-			'members': chat_dict["members"],
-			'UpdatedAt': chat_dict["UpdatedAt"]
+			'member': chat_dict["member"],
+			'updatedAt': chat_dict["updatedAt"]
 		}
 		return { 'status': 'OK', 'message': f'Berhasil membuat chat', 'data': response}
 
@@ -581,7 +581,6 @@ class Chat:
 					break
 		else:
 			chat_name = self.chats[chat_id]['name']
-
 		inbox = {
 			"id": chat_id,
 			"type": self.chats[chat_id]['type'],
@@ -696,8 +695,8 @@ if __name__=="__main__":
 
 	# testing createGroup dan createChat
 	sesi1 = j.proses("login messi secret")
-	print(j.proses("createGroup {} group group1 secret".format(sesi1['tokenid'])))
-	print(j.chats)
+	c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
 
 	sesi2 = j.proses("login henderson secret")
 	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
