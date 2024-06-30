@@ -396,7 +396,7 @@ class Chat:
 			'type': type,
 			'name': group_name,
 			'password': password,
-			'message': {},
+			'message': [],
 			'member': members,
 			'updatedAt': current_time
 		}
@@ -556,10 +556,10 @@ class Chat:
 						break
 			else:
 				chat_name = self.chats[chat_id]['name']
-			if self.chats[chat_id]['message'] != {}:
+			if self.chats[chat_id]['message'] != []:
 				message = self.chats[chat_id]['message'][-1]
 			else:
-				message = {}
+				message = []
 			inbox.append({
 				"id": chat_id,
 				"type": self.chats[chat_id]['type'],
@@ -710,6 +710,7 @@ if __name__=="__main__":
 	# testing joinGroup
 	sesi1 = j.proses("login messi secret")
 	print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
 	print(j.chats['3'])
 
 	print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
