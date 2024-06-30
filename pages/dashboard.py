@@ -4,18 +4,56 @@ from cli import cc
 
 def dashboard():
     def handle_logout(e):
-        result = cc.proses(f"logout")
+        result = cc.proses("logout")
         if result == "user logged out":
             e.page.go("/login")
             
     def get_all_last_msg():
-        result = cc.proses(f"inboxall")
+        result = cc.proses("inboxall")
         if result.startswith("Error"):
             return []
         else:
             return json.loads(result)
     
     def handle_search(e):
+        search_value = search_field.value
+        if search_value == '':
+            filtered_chat_data = chat_data
+        else:
+            filtered_chat_data = [chat for chat in chat_data if search_value.lower() in chat["name"].lower()]
+        
+        chat_list_view.controls.clear()
+        chat_list_view.controls.append(new_chat_container)
+        for chat in filtered_chat_data:
+            profile_icon = ft.Icon(
+                name=ft.icons.ACCOUNT_CIRCLE,
+                size=50,
+                color=ft.colors.GREY
+            )
+            chat_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        profile_icon,
+                        ft.Column(
+                            controls=[
+                                ft.Text(chat["name"], size=16),
+                                ft.Text(chat["message"]["message"], size=14, color=ft.colors.GREY) if chat["message"] else ft.Text()
+                            ],
+                            spacing=5,
+                            alignment=ft.MainAxisAlignment.START
+                        )
+                    ],
+                    spacing=10,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=ft.padding.all(10),
+                on_click=go_to_group_chat(chat["id"]) if chat["type"] == "group" else go_to_private_chat(chat["id"]),
+                ink=True,
+                bgcolor=ft.colors.GREY_100,
+                border_radius=15,
+                margin=ft.margin.symmetric(horizontal=10)
+            )
+            chat_list_view.controls.append(chat_container)
         e.page.update()
     
     def go_to_private_chat(id):
@@ -49,7 +87,7 @@ def dashboard():
         bgcolor="#a4a4a4, 0.2",
         border_radius=15, 
         border_color=ft.colors.TRANSPARENT, 
-        filled=True
+        filled=True,
     )
     search_button = ft.IconButton(
         icon=ft.icons.SEARCH,
@@ -97,7 +135,6 @@ def dashboard():
     )
     
     chat_data = get_all_last_msg()
-
     chat_containers = []
     for chat in chat_data:
         profile_icon = ft.Icon(
@@ -131,14 +168,14 @@ def dashboard():
         chat_containers.append(chat_container)
     
     chat_list_view = ft.ListView(
-        controls = [new_chat_container] +  chat_containers,
+        controls=[new_chat_container] + chat_containers,
         padding=10,
         spacing=10,
         expand=True
     )
     
     return ft.Column(
-        controls = [
+        controls=[
             top_bar,
             search_bar,
             ft.Container(content=chat_list_view, expand=True)

@@ -7,6 +7,44 @@ def new_chat():
         e.page.go("/dashboard")
         
     def handle_search(e):
+        search_value = search_field.value
+        if search_value == '':
+            filtered_chat_data = chat_data
+        else:
+            filtered_chat_data = [chat for chat in chat_data if search_value.lower() in chat["name"].lower()]
+        
+        chat_list_view.controls.clear()
+        chat_list_view.controls.append(create_group_container)
+        for chat in filtered_chat_data:
+            profile_icon = ft.Icon(
+                name=ft.icons.ACCOUNT_CIRCLE,
+                size=50,
+                color=ft.colors.GREY
+            )
+            chat_container = ft.Container(
+                content=ft.Row(
+                    controls=[
+                        profile_icon,
+                        ft.Column(
+                            controls=[
+                                ft.Text(chat["name"], size=16),
+                                ft.Text("Join this group", size=14, color=ft.colors.GREY) if chat["type"] == "group" else ft.Text("Start new chat", size=14, color=ft.colors.GREY)
+                            ],
+                            spacing=5,
+                            alignment=ft.MainAxisAlignment.START
+                        )
+                    ],
+                    spacing=10,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=ft.padding.all(10),
+                on_click=join_group(chat["id"], chat["name"]) if chat["type"] == "group" else go_to_private_chat(chat["name"]),
+                ink=True,
+                bgcolor=ft.colors.GREY_100,
+                border_radius=15,
+                margin=ft.margin.symmetric(horizontal=10)
+            )
+            chat_list_view.controls.append(chat_container)
         e.page.update()
         
     def go_to_private_chat(username):
