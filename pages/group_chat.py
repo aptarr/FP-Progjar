@@ -8,34 +8,24 @@ def group_chat(page: ft.Page, id):
     def back(e):
         e.page.go("/dashboard")
 
-    # Function to handle file picking result
     def pick_files_result(e: ft.FilePickerResultEvent):
         if e.files:
-            file = e.files[0]  # Get the first selected file
+            file = e.files[0]
             
-            # Save the file locally
-            upload_dir = "uploaded_files"
-            os.makedirs(upload_dir, exist_ok=True)
-            file_path = os.path.join(upload_dir, file.name)
+            file_path = file.name
             shutil.copy(file.path, file_path)
-
-            # Process file sending
             result = cc.proses(f"sendfile {id} {file_path} {file}")
             print(result)
             
-            # Update chat interface and scroll to latest message
             update_chat()
             chat_bubbles.scroll_to(offset=-1, duration=300)
             page.update()
 
-            # Delete the file after copying
             os.remove(file_path)
 
-    # Function to handle file downloading
     def download_file(file_path):
         file_name = os.path.basename(file_path)
 
-        # Process file sending
         result = cc.proses(f"getfile {id} {file_name}")
         print(result)
         
@@ -46,7 +36,6 @@ def group_chat(page: ft.Page, id):
         update_chat()
         e.page.update()
         
-    # Function to fetch messages from server
     def get_msgs():
         result = cc.proses(f"inbox {id}")
         if result.startswith("Error"):
@@ -68,14 +57,12 @@ def group_chat(page: ft.Page, id):
 
         for message in chat_data['message']:
             if message['isFile']:
-                # File bubble
                 file_container = ft.Container(
                     content=ft.Column(
                         controls=[
                             ft.Row(
                                 controls=[
-                                    ft.Text(message['message'], size=14, color=ft.colors.RED_300),
-                                    # Add file size if available
+                                    ft.Text(message['message'], size=14, color=ft.colors.BLACK if message['sender'] == username else ft.colors.WHITE),
                                 ],
                                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                             ),
@@ -98,13 +85,12 @@ def group_chat(page: ft.Page, id):
                     ),
                     padding=ft.padding.all(10),
                     border_radius=ft.border_radius.all(15),
-                    bgcolor=ft.colors.GREY_200,
+                    bgcolor=ft.colors.GREY_200 if message['sender'] == username else ft.colors.RED_300,
                     margin=ft.margin.all(5),
                     width=200,
                 )
                 bubble = file_container
             else:
-                # Regular chat bubble
                 bubble = ft.Container(
                     content=ft.Text(
                         message['message'],
@@ -126,7 +112,6 @@ def group_chat(page: ft.Page, id):
                 )
             )
         
-        # Update chat_bubbles if it's added to the page
         if hasattr(chat_bubbles, '__page') and chat_bubbles.__page:
             chat_bubbles.update()
 
@@ -152,20 +137,16 @@ def group_chat(page: ft.Page, id):
         padding=ft.padding.all(10),
     )
 
-    # Create chat bubbles control
     chat_bubbles = ft.Column(
         controls=[],
         scroll=ft.ScrollMode.ALWAYS,
         expand=True
     )
 
-    # Create file picker dialog
     pick_files_dialog = ft.FilePicker(on_result=pick_files_result)
 
-    # Add file picker dialog to page overlay
     page.overlay.append(pick_files_dialog)
 
-    # Create add file button control
     add_file_button = ft.Container(
         content=ft.Icon(name=ft.icons.ADD, size=30, color=ft.colors.GREY),
         on_click=lambda _: pick_files_dialog.pick_files(allow_multiple=True),
@@ -202,9 +183,7 @@ def group_chat(page: ft.Page, id):
         bgcolor=ft.colors.GREY_100
     )
     
-    # Initialize chat interface on page load
     update_chat()
-
 
     return ft.Column(
         controls=[
