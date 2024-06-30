@@ -556,11 +556,15 @@ class Chat:
 						break
 			else:
 				chat_name = self.chats[chat_id]['name']
+			if self.chats[chat_id]['message'] != {}:
+				message = self.chats[chat_id]['message'][-1]
+			else:
+				message = {}
 			inbox.append({
 				"id": chat_id,
 				"type": self.chats[chat_id]['type'],
 				"name": chat_name,
-				"message": self.chats[chat_id]['message'][-1],
+				"message": message,
 				"member": self.chats[chat_id]['member'],
 				"updatedAt": self.chats[chat_id]['updatedAt']
 			})
@@ -697,6 +701,7 @@ if __name__=="__main__":
 	sesi1 = j.proses("login messi secret")
 	c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
 	print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
 
 	sesi2 = j.proses("login henderson secret")
 	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
