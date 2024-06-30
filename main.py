@@ -28,12 +28,12 @@ def main(page: ft.Page):
         if route.startswith("/private_chat/"):
             id = route.split("/private_chat/")[1]
             page.views.append(
-                ft.View(route, [private_chat(id)])
+                ft.View(route, [private_chat(page, id)])
             )
         elif route.startswith("/group_chat/"):
             id = route.split("/group_chat/")[1]
             page.views.append(
-                ft.View(route, [group_chat(id)])
+                ft.View(route, [group_chat(page, id)])
             )
         elif route.startswith("/join_group/"):
             _, _, id, name = route.split("/")

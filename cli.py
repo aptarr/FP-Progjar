@@ -1,5 +1,6 @@
 import socket
 import json
+import os
 import base64
 
 TARGET_IP = "127.0.0.1"
@@ -102,6 +103,11 @@ class ChatClient:
             #proses file dalam bentuk base64 ke bentuk bytes
             file_content = hasil['data']
             data = base64.b64decode(file_content)
+            download_dir = 'downloaded_files'
+            os.makedirs(download_dir, exist_ok=True)
+
+            file_path = os.path.join(download_dir, file_path)
+
             fp = open(file_path,'wb+')
             fp.write(data)
             fp.close()
