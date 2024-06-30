@@ -13,7 +13,7 @@ def login():
             e.page.update()
 
     logo = ft.Container(
-        content = ft.Text("LOGO", size=36, color="#d84d4d"),
+        content = ft.Image(src="img\logo.png", width=100, height=100),
         alignment = ft.alignment.center,
         margin = ft.margin.only(bottom=30, top=0)
     )
