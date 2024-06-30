@@ -663,66 +663,66 @@ if __name__=="__main__":
 	j = Chat()
 
 	# testing getusername
-	# sesi1 = j.proses("login messi secret ")
-	# print(j.proses("getusername {} ".format(sesi1['tokenid'])))
+	sesi1 = j.proses("login messi secret ")
+	print(j.proses("getusername {} ".format(sesi1['tokenid'])))
 	
-	# print(j.proses("getusername {} ".format("FAKE_TOKENID")))
+	print(j.proses("getusername {} ".format("FAKE_TOKENID")))
 	
-	# # testing register
-	# sesi = j.proses("register geprek secret ")
-	# print(j.users)
+	# testing register
+	sesi = j.proses("register geprek secret ")
+	print(j.users)
 
-	# sesi2 = j.proses("register geprek secret ")
-	# print(j.users)
+	sesi2 = j.proses("register geprek secret ")
+	print(j.users)
 
-	# # testing inbox dan inboxall
-	# sesi1 = j.proses("login messi secret")
-	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
-	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
+	# testing inbox dan inboxall
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	# sesi2 = j.proses("login henderson secret")
-	# print(j.proses("inboxall {}".format(sesi2['tokenid'])))
-	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '1')))
+	sesi2 = j.proses("login henderson secret")
+	print(j.proses("inboxall {}".format(sesi2['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '1')))
 
-	# sesi3 = j.proses("login lineker secret")
-	# print(j.proses("inboxall {}".format(sesi3['tokenid'])))
-	# print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
+	sesi3 = j.proses("login lineker secret")
+	print(j.proses("inboxall {}".format(sesi3['tokenid'])))
+	print(j.proses("inbox {} {}".format(sesi3['tokenid'], '1')))
 
 	# testing sendmsg
 	sesi1 = j.proses("login messi secret")
 	print(j.proses("sendmsg {} {} {} \r\n".format(sesi1['tokenid'], '1', 'testing send msg')))
 	print(j.proses("inbox {} {}".format(sesi1['tokenid'], '1')))
 
-	# sesi2 = j.proses("login lineker secret")
-	# print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
-	# print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
+	sesi2 = j.proses("login lineker secret")
+	print(j.proses("sendmsg {} {} {}".format(sesi2['tokenid'], '2', 'testing send msg')))
+	print(j.proses("inbox {} {}".format(sesi2['tokenid'], '2')))
 
 	# testing createGroup dan createChat
-	# sesi1 = j.proses("login messi secret")
-	# c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
-	# print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
-	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	sesi1 = j.proses("login messi secret")
+	c = j.proses("createGroup {} group group1 secret".format(sesi1['tokenid']))
+	print(j.proses("inbox {} {}".format(sesi1['tokenid'], c['data']['id'])))
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
 
-	# sesi2 = j.proses("login henderson secret")
-	# print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
-	# print(j.chats)
+	sesi2 = j.proses("login henderson secret")
+	print(j.proses("createChat {} private hmd".format(sesi2['tokenid'])))
+	print(j.chats)
 
-	# # testing joinGroup
-	# sesi1 = j.proses("login messi secret")
-	# print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
-	# print(j.proses("inboxall {}".format(sesi1['tokenid'])))
-	# print(j.chats['3'])
+	# testing joinGroup
+	sesi1 = j.proses("login messi secret")
+	print(j.proses("joinGroup {} 3 secret".format(sesi1['tokenid'])))
+	print(j.proses("inboxall {}".format(sesi1['tokenid'])))
+	print(j.chats['3'])
 
-	# print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
-	# print(j.chats['3'])
+	print(j.proses("joinGroup {} 3 fakePassword".format(sesi1['tokenid'])))
+	print(j.chats['3'])
 
-	# sesi2 = j.proses("login lineker secret")
-	# print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
-	# print(j.chats['3'])
+	sesi2 = j.proses("login lineker secret")
+	print(j.proses("joinGroup {} 3 secret".format(sesi2['tokenid'])))
+	print(j.chats['3'])
 	
-	# # testing getNewChat
-	# sesi1 = j.proses("login lineker secret")
-	# print(j.proses("getNewChat {}".format(sesi1['tokenid'])))
+	# testing getNewChat
+	sesi1 = j.proses("login lineker secret")
+	print(j.proses("getNewChat {}".format(sesi1['tokenid'])))
 
-	# sesi2 = j.proses("login messi secret")
-	# print(j.proses("getNewChat {}".format(sesi2['tokenid'])))
+	sesi2 = j.proses("login messi secret")
+	print(j.proses("getNewChat {}".format(sesi2['tokenid'])))
