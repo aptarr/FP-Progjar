@@ -28,10 +28,11 @@ def private_chat(page: ft.Page, id):
 
     def send_message(e):
         message = message_field.value
-        cc.proses(f"sendmsg {id} {message}")
-        message_field.value = ""
-        update_chat()
-        e.page.update()
+        if (message != ''):
+            cc.proses(f"sendmsg {id} {message}")
+            message_field.value = ""
+            update_chat()
+            e.page.update()
 
     def get_msgs():
         result = cc.proses(f"inbox {id}")
