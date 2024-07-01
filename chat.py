@@ -6,6 +6,7 @@ import logging
 import socket
 import threading
 import base64
+import json
 from queue import Queue
 from datetime import datetime
 
@@ -193,12 +194,9 @@ class Chat:
 				auth=j[1].strip()
 				ipRealm=j[2].strip()
 				chat_id=j[3].strip()
-				sender=j[4].strip()
-				timestamp=j[5].strip()
-				message = " ".join(j[6:])
-				message = message[:-3]
-				logging.warning("SYNC: syncmsg {} {} {} {} {} {}" . format(auth, ipRealm, chat_id, sender, timestamp, message))
-				return self.sync_message(auth, ipRealm, chat_id, sender, message, timestamp)
+				message = json.loads(' '.join(j[4:]).strip())
+				logging.warning("SYNC: syncmsg {} {} {} {}" . format(auth, ipRealm, chat_id, message))
+				return self.sync_message(auth, ipRealm, chat_id, message)
 			
 			elif(command == 'addRealmChat'):
 				auth=j[1].strip()
@@ -212,7 +210,7 @@ class Chat:
 				auth=j[1].strip()
 				ipRealm=j[2].strip()
 				chat_id = j[3].strip()
-				chat_dict = ' '.join(j[4:]).strip()
+				chat_dict = json.loads(' '.join(j[4:]).strip())
 				logging.warning("SYNC: changeSelfChat {} {} {} {}" . format(auth, ipRealm, chat_id, chat_dict))
 				return self.change_self_chat(auth, ipRealm, chat_id, chat_dict)
 
@@ -247,6 +245,13 @@ class Chat:
 				tokenid=j[1].strip()
 				logging.warning("GETNEWCHAT: {}" . format(tokenid))
 				return self.get_new_chat(tokenid)
+			
+			elif (command == 'getNewChatRealm'):
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				username=j[3].strip()
+				logging.warning("SYNC: getNewChatRealm {} {} {}" . format(auth, ipRealm, username))
+				return self.get_new_chat_realm(auth, ipRealm, username)
 
 			elif (command == 'addMember'):
 				auth=j[1].strip()
@@ -403,14 +408,15 @@ class Chat:
 		self.chats[chat_id] = chat_dict
 		user['userdetail']['chats'].append(chat_id)
 		# melakukan broadcast chat group ke semua user
+		chat_json = json.dumps(chat_dict)
 		if type == 'group':
 			for ip,val in self.realms.items():
-				string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_dict)
+				string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_json)
 				self.sendstring(string, ip, self.realms[ip]['port'])
 		else:
 			for ip,val in self.realms.items():
 				if member in val['users']:
-					string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_dict)
+					string="changeSelfChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, chat_json)
 					self.sendstring(string, ip, self.realms[ip]['port'])
 
 		# untuk member akan disambungkan ke realm yang bersangkutan
@@ -421,10 +427,9 @@ class Chat:
 						string="addRealmChat {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, member)
 						result = self.sendstring(string, ip, self.realms[ip]['port'])
 						if result['status']=='OK':
-							return "{}" . format(result['message'])
+							continue
 						else:
-							return "Error, {}" . format(result['message'])
-						break
+							return { 'status': 'ERROR', 'message': result['message'] }
 			else:
 				self.users[member]['chats'].append(chat_id)
 		if type == 'private':
@@ -444,20 +449,17 @@ class Chat:
 		}
 		return { 'status': 'OK', 'message': f'Berhasil membuat chat', 'data': response}
 
-	def sync_message(self, auth, ipRealm, chat_id, sender, message, timestamp):
+	def sync_message(self, auth, ipRealm, chat_id, message):
 		if self.realms[ipRealm]['auth'] != auth:
 			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
 		
 		if chat_id not in self.chats:
 			return {'status': 'ERROR', 'message': 'Chat tidak ditemukan'}
 
-		self.chats[chat_id]['message'].append({
-			'sender': sender,
-			'message': message,
-			'timestamp': timestamp
-		})
+		print(self.chats[chat_id])
+		self.chats[chat_id]['message'].append(message)
 
-		self.chats[chat_id]['updatedAt'] = timestamp
+		self.chats[chat_id]['updatedAt'] = message['timestamp']
 
 		return {'status': 'OK', 'message': 'Pesan berhasil disinkronisasi'}
 
@@ -472,20 +474,23 @@ class Chat:
 		timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 		sender = self.sessions[tokenid]['username']
 
-		self.chats[chat_id]['message'].append({
+		message_dict = {
 			'sender': sender,
 			'message': message,
 			'isFile': False,
 			'timestamp': timestamp
-		})
+		}
+
+		self.chats[chat_id]['message'].append(message_dict)
 
 		self.chats[chat_id]['updatedAt'] = timestamp
 
 		# sync new message across realms
+		message_json = json.dumps(message_dict)
 		for ipRealm in self.realms:
 			for member in self.chats[chat_id]['member']:
 				if member in self.realms[ipRealm]['users']:
-					string="syncmsg {} {} {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, sender, timestamp, message)
+					string="syncmsg {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, message_json)
 					result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
 					if result['status']=='OK':
 						break
@@ -616,6 +621,15 @@ class Chat:
 					'id': user,
 					'name': user
 				})
+		
+		for ipRealm in self.realms:
+			string="getNewChatRealm {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, username)
+			result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
+			if result['status']=='OK':
+				data = data + result['data']
+			else:
+				return "Error, {}" . format(result['message'])
+
 		for chat in self.chats:
 			if self.chats[chat]['type'] == 'group':
 				if username not in self.chats[chat]['member']:
@@ -626,7 +640,29 @@ class Chat:
 				})
 		
 		return {'status': 'OK', 'data': data}
+	
+	def get_new_chat_realm(self, auth, ipRealm, username):
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
 
+		data = []
+		for user in self.users:
+			found = False
+			if user == username:
+				continue
+			for chat in self.chats:
+				if self.chats[chat]['type'] == 'private':
+					if username in self.chats[chat]['member'] and user in self.chats[chat]['member']:
+						found = True
+						break
+			if not found:
+				data.append({
+					'type': 'private',
+					'id': user,
+					'name': user
+				})
+		
+		return {'status': 'OK', 'data': data}
 	
 	def sync_self_chat(self, auth, ipRealm, chat_id, username):
 		if self.realms[ipRealm]['auth'] != auth:
