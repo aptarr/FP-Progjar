@@ -278,6 +278,14 @@ class Chat:
 				filecontent = ' '.join(j[4:]).strip()
 				logging.warning("SENDFILE: {} {} {}" . format(tokenid, chat_id, filepath))
 				return self.upload_file(tokenid, chat_id, filecontent, filepath)
+			
+			elif (command == 'syncfile'):
+				auth=j[1].strip()
+				ipRealm=j[2].strip()
+				filepath=j[3].strip()
+				filecontent = ' '.join(j[4:]).strip()
+				logging.warning("SYNC: syncfile {} {} {} {}" . format(auth, ipRealm, filepath, filecontent))
+				return self.sync_file(auth, ipRealm, filepath, filecontent)
 
 			elif (command == 'getfile'):
 				tokenid=j[1].strip()
@@ -348,9 +356,9 @@ class Chat:
 			string="addUserRealm {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, username)
 			result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
 			if result['status']=='OK':
-				return "{}" . format(result['message'])
+				continue
 			else:
-				return "Error, {}" . format(result['message'])
+				return {'status': 'ERROR', 'message': result['message']}
 				
 		return { 'status': 'OK', 'tokenid': tokenid }
 		
@@ -495,7 +503,7 @@ class Chat:
 					if result['status']=='OK':
 						break
 					else:
-						return "Error, {}" . format(result['message'])
+						return {'status': 'ERROR', 'message': result['message']}
 
 		return {'status': 'OK', 'message': 'Pesan berhasil dikirim'}
 
@@ -526,6 +534,36 @@ class Chat:
 		
 		self.chats[chat_id]['message'].append(message)
 		self.chats[chat_id]['updatedAt'] = message['timestamp']
+
+		# sync new file across realms
+		message_json = json.dumps(message)
+		for ipRealm in self.realms:
+			for member in self.chats[chat_id]['member']:
+				if member in self.realms[ipRealm]['users']:
+					string="syncmsg {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, chat_id, message_json)
+					result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
+					if result['status']=='OK':
+						string="syncfile {} {} {} {} \r\n" . format(self.realm_auth, self.realm_ip, file_path, file_content)
+						result = self.sendstring(string, ipRealm, self.realms[ipRealm]['port'])
+						if result['status']=='OK':
+							break
+						else:
+							return {'status': 'ERROR', 'message': result['message']}
+					else:
+						return {'status': 'ERROR', 'message': result['message']}
+
+		return {'status': 'OK', 'message': f"File {filename} uploaded successfully"}
+	
+	def sync_file(self, auth, ipRealm, file_path, file_content):
+		if self.realms[ipRealm]['auth'] != auth:
+			return { 'status': 'ERROR', 'message': 'Autentikasi Realm Gagal' }
+
+		filename = os.path.basename(file_path)
+		dest_path = os.path.join(self.file_storage_path, filename)
+		
+		with open(dest_path, 'wb') as f_dest:
+			f_dest.write(base64.b64decode(file_content))
+		
 		return {'status': 'OK', 'message': f"File {filename} uploaded successfully"}
 
 	def getfile(self, tokenid, chat_id, file_path):
