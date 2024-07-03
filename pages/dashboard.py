@@ -116,8 +116,8 @@ def dashboard():
                 plus_icon,
                 ft.Column(
                     controls=[
-                        ft.Text("Start New Chat", size=16),
-                        ft.Text("Find chat to start with", size=14, color=ft.colors.GREY)
+                        ft.Text("Start New Chat", size=16, color=ft.colors.BLACK),
+                        ft.Text("Find chat to start with", size=14, color=ft.colors.GREY_500)
                     ],
                     spacing=5,
                     alignment=ft.MainAxisAlignment.START
@@ -148,8 +148,8 @@ def dashboard():
                     profile_icon,
                     ft.Column(
                         controls=[
-                            ft.Text(chat["name"], size=16),
-                            ft.Text(chat["message"]["message"], size=14, color=ft.colors.GREY) if chat["message"] else ft.Text()
+                            ft.Text(chat["name"], size=16, color=ft.colors.BLACK),
+                            ft.Text(chat["message"]["message"], size=14, color=ft.colors.GREY_700) if chat["message"] else ft.Text()
                         ],
                         spacing=5,
                         alignment=ft.MainAxisAlignment.START

@@ -57,10 +57,18 @@ def group_chat(page: ft.Page, id):
         chat_bubbles.controls = []
 
         for message in chat_data['message']:
+            sender_name = ft.Text(
+                message['sender'],
+                size=12,
+                color=ft.colors.GREY if message['sender'] == username else ft.colors.BLACK,
+                weight=ft.FontWeight.BOLD,
+                visible=message['sender'] != username 
+            )
             if message['isFile']:
                 file_container = ft.Container(
                     content=ft.Column(
                         controls=[
+                            sender_name,
                             ft.Row(
                                 controls=[
                                     ft.Text(message['message'], size=14, color=ft.colors.BLACK if message['sender'] == username else ft.colors.WHITE),
@@ -93,10 +101,15 @@ def group_chat(page: ft.Page, id):
                 bubble = file_container
             else:
                 bubble = ft.Container(
-                    content=ft.Text(
-                        message['message'],
-                        size=14,
-                        color=ft.colors.BLACK if message['sender'] == username else ft.colors.WHITE
+                    content=ft.Column(
+                        controls=[
+                            sender_name,
+                            ft.Text(
+                                message['message'],
+                                size=14,
+                                color=ft.colors.BLACK if message['sender'] == username else ft.colors.WHITE
+                            ),
+                        ]
                     ),
                     padding=ft.padding.all(10),
                     border_radius=ft.border_radius.all(15),
@@ -160,7 +173,8 @@ def group_chat(page: ft.Page, id):
         bgcolor="#f7f7fc", 
         border_radius=15, 
         border_color=ft.colors.TRANSPARENT, 
-        filled=True
+        filled=True,
+        color=ft.colors.BLACK
     )
     send_button = ft.Container(
         content=ft.Icon(

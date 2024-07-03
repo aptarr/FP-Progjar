@@ -123,8 +123,8 @@ def new_chat():
                 plus_icon,
                 ft.Column(
                     controls=[
-                        ft.Text("Create New Group", size=16),
-                        ft.Text("Create Group", size=14, color=ft.colors.GREY)
+                        ft.Text("Create New Group", size=16, color=ft.colors.BLACK),
+                        ft.Text("Create Group", size=14, color=ft.colors.GREY_500)
                     ],
                     spacing=5,
                     alignment=ft.MainAxisAlignment.START
@@ -160,7 +160,7 @@ def new_chat():
                     profile_icon,
                     ft.Column(
                         controls=[
-                            ft.Text(chat["name"], size=16),
+                            ft.Text(chat["name"], size=16, color=ft.colors.BLACK),
                             ft.Text("Join this group", size=14, color=ft.colors.GREY) if chat["type"] == "group" else ft.Text("Start new chat", size=14, color=ft.colors.GREY)
                         ],
                         spacing=5,

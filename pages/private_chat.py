@@ -146,7 +146,8 @@ def private_chat(page: ft.Page, id):
         bgcolor="#f7f7fc", 
         border_radius=15, 
         border_color=ft.colors.TRANSPARENT, 
-        filled=True
+        filled=True,
+        color=ft.colors.BLACK
     )
 
     send_button = ft.Container(
